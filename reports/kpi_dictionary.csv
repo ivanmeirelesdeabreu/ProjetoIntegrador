@@ -1,0 +1,16 @@
+KPI,Descricao,Formula,Colunas_Utilizadas,Nivel_Agregacao
+Taxa_Sucesso,% de candidatos eleitos,Eleitos / Total,DS_SIT_TOT_TURNO,UF
+Perc_Feminino,% de candidatas mulheres,Feminino / Total,DS_GENERO,UF
+Perc_Masculino,% de candidatos homens,Masculino / Total,DS_GENERO,UF
+Sucesso_Feminino,% de mulheres eleitas,Eleitas / Total mulheres,"DS_GENERO, DS_SIT_TOT_TURNO",UF
+Sucesso_Masculino,% de homens eleitos,Eleitos / Total homens,"DS_GENERO, DS_SIT_TOT_TURNO",UF
+Ef_Partido,Eficiência por partido,Eleitos / Total partido,"SG_PARTIDO, DS_SIT_TOT_TURNO",Partido
+Top_Partido_Candidatos,Partido com mais candidatos,Max(count),SG_PARTIDO,UF
+Perc_Superior,% com ensino superior,Superior / Total,DS_GRAU_INSTRUCAO,UF
+Sucesso_Escolaridade,Taxa sucesso por escolaridade,Eleitos / Total escolaridade,"DS_GRAU_INSTRUCAO, DS_SIT_TOT_TURNO",UF
+Perc_Raca,% por raça/cor,Total raça / total,DS_COR_RACA,UF
+Sucesso_Raca,Taxa sucesso por raça,Eleitos / Total raça,"DS_COR_RACA, DS_SIT_TOT_TURNO",UF
+Idade_Media,Idade média dos candidatos,Média,DT_NASCIMENTO,UF
+Idade_Media_Eleitos,Idade média dos eleitos,Média,"DT_NASCIMENTO, DS_SIT_TOT_TURNO",UF
+Candidatos_por_Cargo,Quantidade por cargo,Count,DS_CARGO,UF
+Taxa_Sucesso_Cargo,Taxa de sucesso por cargo,Eleitos / Total cargo,"DS_CARGO, DS_SIT_TOT_TURNO",UF
