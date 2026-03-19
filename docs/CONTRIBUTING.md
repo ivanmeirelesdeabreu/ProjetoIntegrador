@@ -19,11 +19,18 @@ Siga estas diretrizes para garantir organização, rastreabilidade e qualidade.
 
 ## Fluxo com comandos (passo a passo)
 
-1. Atualizar a base do projeto  
+1. Atualizar a base do projeto 
+git clone https://github.com/ivanmeirelesdeabreu/ProjetoIntegrador.git 
 git checkout main  
 git pull origin main  
 
-2. Criar uma nova branch  
+git fetch origin
+atualizar para um branch
+git checkout 8-estruturação-e-documentação-de-metadados-da-fonte
+
+
+2. Criar uma nova branch 
+melhor ser criada no git-hub project (tarefa->create a branch)
 git checkout -b tipo/nome-da-branch  
 
 3. Adicionar arquivos  
