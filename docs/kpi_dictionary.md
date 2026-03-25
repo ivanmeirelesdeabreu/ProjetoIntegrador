@@ -1,10 +1,49 @@
-# 📈 KPI Dictionary — Projeto Eleições 2024
+# KPI Dictionary — Projeto Eleições 2024
+
 
 Este documento define os principais indicadores analíticos (KPIs) derivados da base do TSE.
 
+**Objetivo do projeto**: Analisar o perfil dos candidatos na eleição de 2024, nos seguintes KPIs:
+
+## KPIs que vão ser trabalhados
+
+### 7. Distribuição por Escolaridade
+
+* **Dimensão**: DS_GRAU_INSTRUCAO
+---
+### 9. Idade Média dos Candidatos
+
+* **Cálculo**:
+
+```sql
+AVG(IDADE)
+#(IDADE = ANO_ELEICAO - ANO(DT_NASCIMENTO))
+```
+---
+### 11. Taxa de Sucesso por Partido
+
+* **Descrição**: Percentual de candidatos eleitos por partido
+* **Cálculo**:
+
+```sql
+COUNT(ELEITOS) / COUNT(TOTAL_PARTIDO)
+```
+---
+### 13. Índice de Competitividade Eleitoral
+
+* **Descrição**: Número médio de candidatos por vaga
+* **Cálculo**:
+
+```sql
+TOTAL_CANDIDATOS / TOTAL_VAGAS
+```
+---
+### 14. Diversidade de Gênero por Partido
+
+* **Descrição**: Proporção de gênero dentro de cada partido
 ---
 
-## 🎯 KPIs Gerais
+## KPIs Gerais
 
 ### 1. Total de Candidatos
 
@@ -65,7 +104,7 @@ COUNT(CASE WHEN DS_SIT_TOT_TURNO = 'ELEITO' THEN 1 END)
 
 ---
 
-## 👥 KPIs Demográficos
+## KPIs Demográficos
 
 ### 6. Distribuição por Gênero
 
@@ -78,46 +117,17 @@ COUNT(*) GROUP BY DS_GENERO
 
 ---
 
-### 7. Distribuição por Escolaridade
-
-* **Dimensão**: DS_GRAU_INSTRUCAO
-
----
-
 ### 8. Distribuição por Cor/Raça
 
 * **Dimensão**: DS_COR_RACA
 
 ---
 
-### 9. Idade Média dos Candidatos
-
-* **Cálculo**:
-
-```sql
-AVG(IDADE)
-```
-
-*(IDADE = ANO_ELEICAO - ANO(DT_NASCIMENTO))*
-
----
-
-## 🏛️ KPIs Políticos
+## KPIs Políticos
 
 ### 10. Candidatos por Partido
 
 * **Dimensão**: SG_PARTIDO
-
----
-
-### 11. Taxa de Sucesso por Partido
-
-* **Descrição**: Percentual de candidatos eleitos por partido
-* **Cálculo**:
-
-```sql
-COUNT(ELEITOS) / COUNT(TOTAL_PARTIDO)
-```
 
 ---
 
@@ -127,24 +137,7 @@ COUNT(ELEITOS) / COUNT(TOTAL_PARTIDO)
 
 ---
 
-## 📊 KPIs Avançados (Analíticos)
-
-### 13. Índice de Competitividade Eleitoral
-
-* **Descrição**: Número médio de candidatos por vaga
-* **Cálculo**:
-
-```sql
-TOTAL_CANDIDATOS / TOTAL_VAGAS
-```
-
----
-
-### 14. Diversidade de Gênero por Partido
-
-* **Descrição**: Proporção de gênero dentro de cada partido
-
----
+## KPIs Avançados (Analíticos)
 
 ### 15. Taxa de Rejeição de Candidaturas
 
@@ -157,7 +150,7 @@ COUNT(INDEFERIDO) / COUNT(*) * 100
 
 ---
 
-## 🧠 Observações
+## Observações
 
 * KPIs podem ser usados em dashboards (Power BI, Tableau, etc.)
 * Ideal criar uma tabela fato + dimensões (modelo estrela)
