@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS "eleicao" (
 	"ds_eleicao" varchar(150) NOT NULL,
 	"dt_eleicao" date NOT NULL,
 	"tp_abrangencia" varchar(50) NOT NULL,
-	"sg_uf" varchar(2) NOT NULL,
 	"sg_ue" varchar(10) NOT NULL,
 	PRIMARY KEY ("cd_eleicao")
 );
@@ -17,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "municipio" (
 	"sg_uf" varchar(2) NOT NULL,
 	"sg_ue" varchar(10) NOT NULL,
 	"nm_ue" varchar(150) NOT NULL,
-	PRIMARY KEY ("sg_uf", "sg_ue")
+	PRIMARY KEY ("sg_ue")
 );
 
 
@@ -35,7 +34,6 @@ CREATE TABLE IF NOT EXISTS "partido" (
 	"sg_partido" varchar(20) NOT NULL,
 	"nm_partido" varchar(150) NOT NULL,
 	PRIMARY KEY ("nr_partido")
-
 );
 
 
@@ -58,9 +56,23 @@ CREATE TABLE IF NOT EXISTS "coligacao" (
 );
 
 
-CREATE TABLE IF NOT EXISTS "candidato" (
+CREATE TABLE IF NOT EXISTS "cor_raca" (
+	"cd_cor_raca" bigint NOT NULL,
 	"ds_cor_raca" varchar(50) NOT NULL,
+	PRIMARY KEY ("cd_cor_raca")
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "ocupacao" (
+	"cd_ocupacao" bigint NOT NULL,
 	"ds_ocupacao" varchar(150) NOT NULL,
+	PRIMARY KEY ("cd_ocupacao")
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "candidato" (
 	"cd_sit_tot_turno" bigint NOT NULL,
 	"cd_situacao_candidatura" bigint NOT NULL,
 	"cd_ocupacao" bigint NOT NULL,
@@ -81,13 +93,9 @@ CREATE TABLE IF NOT EXISTS "candidato" (
 	"nr_federacao" bigint NOT NULL,
 	"nr_partido" bigint NOT NULL,
 	"cd_cargo" bigint NOT NULL,
-	"sg_ue" varchar(10) NOT NULL,
-	"sg_uf" varchar(2) NOT NULL,
 	"cd_eleicao" bigint NOT NULL,
 	"sq_candidato" bigint NOT NULL,
-
 	PRIMARY KEY ("sq_candidato")
-
 );
 
 
@@ -108,7 +116,9 @@ CREATE TABLE IF NOT EXISTS "estado_civil" (
 
 );
 
-ALTER TABLE "eleicao" ADD CONSTRAINT "eleicao_fk7" FOREIGN KEY ("sg_uf","sg_ue") REFERENCES "municipio"("sg_uf","sg_ue");
+
+
+ALTER TABLE "eleicao" ADD CONSTRAINT "eleicao_fk7" FOREIGN KEY ("sg_ue") REFERENCES "municipio"("sg_ue");
 ALTER TABLE "candidato" ADD CONSTRAINT "candidato_fk6" FOREIGN KEY ("cd_estado_civil") REFERENCES "estado_civil"("cd_estado_civil");
 ALTER TABLE "candidato" ADD CONSTRAINT "candidato_fk7" FOREIGN KEY ("cd_grau_instrucao") REFERENCES "grau_instrucao"("cd_grau_instrucao");
 ALTER TABLE "candidato" ADD CONSTRAINT "candidato_fk18" FOREIGN KEY ("sq_coligacao") REFERENCES "coligacao"("sq_coligacao");
@@ -116,3 +126,5 @@ ALTER TABLE "candidato" ADD CONSTRAINT "candidato_fk19" FOREIGN KEY ("nr_federac
 ALTER TABLE "candidato" ADD CONSTRAINT "candidato_fk20" FOREIGN KEY ("nr_partido") REFERENCES "partido"("nr_partido");
 ALTER TABLE "candidato" ADD CONSTRAINT "candidato_fk21" FOREIGN KEY ("cd_cargo") REFERENCES "cargo"("cd_cargo");
 ALTER TABLE "candidato" ADD CONSTRAINT "candidato_fk24" FOREIGN KEY ("cd_eleicao") REFERENCES "eleicao"("cd_eleicao");
+ALTER TABLE "candidato" ADD CONSTRAINT "candidato_fk25" FOREIGN KEY ("cd_cor_raca") REFERENCES "cor_raca"("cd_cor_raca");
+ALTER TABLE "candidato" ADD CONSTRAINT "candidato_fk26" FOREIGN KEY ("cd_ocupacao") REFERENCES "ocupacao"("cd_ocupacao");
