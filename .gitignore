@@ -28,3 +28,6 @@ data/raw/consulta_cand_2024/consulta_cand_2024_TO.csv
 
 .venv/
 venv/
+
+__pycache__/
+.env
