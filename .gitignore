@@ -25,3 +25,6 @@ data/raw/consulta_cand_2024/consulta_cand_2024_SC.csv
 data/raw/consulta_cand_2024/consulta_cand_2024_SE.csv
 data/raw/consulta_cand_2024/consulta_cand_2024_SP.csv
 data/raw/consulta_cand_2024/consulta_cand_2024_TO.csv
+
+.venv/
+venv/

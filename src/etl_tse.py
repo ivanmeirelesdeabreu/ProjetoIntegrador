@@ -87,6 +87,37 @@ df["cd_situacao_candidatura"] = pd.to_numeric(df["cd_situacao_candidatura"], err
 df["cd_sit_tot_turno"] = pd.to_numeric(df["cd_sit_tot_turno"], errors="coerce")
 
 # =========================
+# 🔁 FUNÇÃO UPSERT em lotes
+# =========================
+def insert_ignore_batch(df, tabela, pk_cols, batch_size=50000):
+    schema = "eleicao"
+
+    for i in range(0, len(df), batch_size):
+        chunk = df.iloc[i:i+batch_size]
+        temp_table = f"tmp_{tabela}"
+
+        chunk.to_sql(temp_table, engine, if_exists='replace', index=False, schema=schema)
+
+        cols = list(chunk.columns)
+        colunas = ", ".join(cols)
+        conflito = ", ".join(pk_cols)
+
+        sql = f"""
+            INSERT INTO {tabela} ({colunas})
+            SELECT {colunas} FROM {temp_table}
+            ON CONFLICT ({conflito}) DO NOTHING;
+            
+            DROP TABLE {temp_table};
+        """
+
+        with engine.begin() as conn:
+            conn.execute(text(sql))
+
+        print(f"✅ Lote {i} até {i+batch_size} inserido em {tabela}")
+
+
+
+# =========================
 # 🔁 FUNÇÃO UPSERT
 # =========================
 def insert_ignore(df, tabela, pk_cols):
@@ -271,6 +302,9 @@ candidato.columns = [
     "cd_sit_tot_turno"
 ]
 
-insert_ignore(candidato, "candidato", ["sq_candidato"])
+#insert_ignore(candidato, "candidato", ["sq_candidato"])
+insert_ignore_batch(candidato, "candidato", ["sq_candidato"])
+
+
 
 print("🚀 ETL finalizado com sucesso!")
