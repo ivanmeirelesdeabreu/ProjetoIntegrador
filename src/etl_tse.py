@@ -151,11 +151,24 @@ insert_ignore(
     ["nr_federacao"]
 )
 
+#insert_ignore(
+#    df[["sq_coligacao","nm_coligacao","ds_composicao_coligacao"]]
+#    .drop_duplicates(),
+#    "coligacao",
+#    ["sq_coligacao"]
+#)
+
 insert_ignore(
-    df[["sq_coligacao","nm_coligacao","ds_composicao_coligacao"]]
-    .drop_duplicates(),
+    df[[
+        "sq_coligacao",
+        "cd_eleicao",
+        "sg_uf",
+        "sg_ue",
+        "nm_coligacao",
+        "ds_composicao_coligacao"
+    ]].drop_duplicates(),
     "coligacao",
-    ["sq_coligacao"]
+    ["sq_coligacao","cd_eleicao","sg_uf","sg_ue"]
 )
 
 insert_ignore(
