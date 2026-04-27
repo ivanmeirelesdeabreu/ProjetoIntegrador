@@ -9,10 +9,10 @@ SET search_path TO eleicao;
 
 
 CREATE TABLE eleicao (
-    cd_eleicao INT PRIMARY KEY,
-    ano_eleicao INT,
+    cd_eleicao bigint PRIMARY KEY,
+    ano_eleicao bigint,
     nm_tipo_eleicao VARCHAR(100),
-    nr_turno INT,
+    nr_turno bigint,
     ds_eleicao VARCHAR(150),
     dt_eleicao DATE,
     tp_abrangencia VARCHAR(50)
@@ -26,18 +26,18 @@ CREATE TABLE municipio (
 );
 
 CREATE TABLE cargo (
-    cd_cargo INT PRIMARY KEY,
+    cd_cargo bigint PRIMARY KEY,
     ds_cargo VARCHAR(100)
 );
 
 CREATE TABLE partido (
-    nr_partido INT PRIMARY KEY,
+    nr_partido bigint PRIMARY KEY,
     sg_partido VARCHAR(20),
     nm_partido VARCHAR(150)
 );
 
 CREATE TABLE federacao (
-    nr_federacao INT PRIMARY KEY,
+    nr_federacao bigint PRIMARY KEY,
     nm_federacao VARCHAR(150),
     sg_federacao VARCHAR(50),
     ds_composicao_federacao TEXT
@@ -51,7 +51,7 @@ CREATE TABLE federacao (
 
 CREATE TABLE coligacao (
     sq_coligacao BIGINT,
-    cd_eleicao INT,
+    cd_eleicao bigint,
     sg_uf CHAR(2),
     sg_ue VARCHAR(10),
     nm_coligacao VARCHAR(150),
@@ -63,51 +63,51 @@ CREATE TABLE coligacao (
 );
 
 CREATE TABLE genero (
-    cd_genero INT PRIMARY KEY,
+    cd_genero bigint PRIMARY KEY,
     ds_genero VARCHAR(50)
 );
 
 
 CREATE TABLE grau_instrucao (
-    cd_grau_instrucao INT PRIMARY KEY,
+    cd_grau_instrucao bigint PRIMARY KEY,
     ds_grau_instrucao VARCHAR(100)
 );
 
 CREATE TABLE estado_civil (
-    cd_estado_civil INT PRIMARY KEY,
+    cd_estado_civil bigint PRIMARY KEY,
     ds_estado_civil VARCHAR(50)
 );
 
 CREATE TABLE cor_raca (
-    cd_cor_raca INT PRIMARY KEY,
+    cd_cor_raca bigint PRIMARY KEY,
     ds_cor_raca VARCHAR(50)
 );
 
 CREATE TABLE ocupacao (
-    cd_ocupacao INT PRIMARY KEY,
+    cd_ocupacao bigint PRIMARY KEY,
     ds_ocupacao VARCHAR(150)
 );
 
 CREATE TABLE situacao_candidatura (
-    cd_situacao_candidatura INT PRIMARY KEY,
+    cd_situacao_candidatura bigint PRIMARY KEY,
     ds_situacao_candidatura VARCHAR(100)
 );
 
 CREATE TABLE situacao_turno (
-    cd_sit_tot_turno INT PRIMARY KEY,
+    cd_sit_tot_turno bigint PRIMARY KEY,
     ds_sit_tot_turno VARCHAR(100)
 );
 
 CREATE TABLE candidato (
     sq_candidato BIGINT PRIMARY KEY,
     
-    cd_eleicao INT,
+    cd_eleicao bigint,
     sg_uf CHAR(2),
     sg_ue VARCHAR(10),
-    cd_cargo INT,
-    nr_partido INT,
-    nr_federacao INT,
-    sq_coligacao BIGINT,
+    cd_cargo bigint,
+    nr_partido bigint,
+    nr_federacao bigint,
+    sq_coligacao bigint,
     
     nr_candidato INT,
     nm_candidato VARCHAR(150),
@@ -120,14 +120,14 @@ CREATE TABLE candidato (
     sg_uf_nascimento CHAR(2),
     nr_titulo_eleitoral VARCHAR(20),
     
-    cd_genero INT,
-    cd_grau_instrucao INT,
-    cd_estado_civil INT,
-    cd_cor_raca INT,
-    cd_ocupacao INT,
+    cd_genero bigint,
+    cd_grau_instrucao bigint,
+    cd_estado_civil bigint,
+    cd_cor_raca bigint,
+    cd_ocupacao bigint,
     
-    cd_situacao_candidatura INT,
-    cd_sit_tot_turno INT,
+    cd_situacao_candidatura bigint,
+    cd_sit_tot_turno bigint,
 
     FOREIGN KEY (cd_eleicao) REFERENCES eleicao(cd_eleicao),
     FOREIGN KEY (sg_uf, sg_ue) REFERENCES municipio(sg_uf, sg_ue),
