@@ -70,11 +70,33 @@ SELECT
     ds_sit_tot_turno
 FROM eleicao.situacao_turno;
 
-CREATE OR REPLACE VIEW dw_eleicao.dim_municipio AS
+CREATE OR REPLACE VIEW dw.dim_municipio AS
 SELECT
+    sg_uf || '-' || sg_ue AS municipio_key,
+
     sg_uf,
     sg_ue,
-    nm_ue
+    nm_ue,
+
+    CASE
+        WHEN sg_uf IN ('AC','AP','AM','PA','RO','RR','TO')
+            THEN 'Norte'
+
+        WHEN sg_uf IN ('AL','BA','CE','MA','PB','PE','PI','RN','SE')
+            THEN 'Nordeste'
+
+        WHEN sg_uf IN ('DF','GO','MT','MS')
+            THEN 'Centro-Oeste'
+
+        WHEN sg_uf IN ('ES','MG','RJ','SP')
+            THEN 'Sudeste'
+
+        WHEN sg_uf IN ('PR','RS','SC')
+            THEN 'Sul'
+
+        ELSE 'Não Informado'
+    END AS regiao
+
 FROM eleicao.municipio;
 
 CREATE OR REPLACE VIEW dw_eleicao.fato_candidatura AS
@@ -96,6 +118,7 @@ SELECT
 
     c.sg_uf,
     c.sg_ue,
+    c.sg_uf || '-' || c.sg_ue AS municipio_key,
 
     -- Métricas
     1 AS qt_candidatos,
