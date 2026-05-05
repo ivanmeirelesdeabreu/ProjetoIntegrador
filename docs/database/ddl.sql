@@ -134,7 +134,7 @@ CREATE TABLE candidato (
     FOREIGN KEY (cd_cargo) REFERENCES cargo(cd_cargo),
     FOREIGN KEY (nr_partido) REFERENCES partido(nr_partido),
     FOREIGN KEY (nr_federacao) REFERENCES federacao(nr_federacao),
-    FOREIGN KEY (sq_coligacao) REFERENCES coligacao(sq_coligacao),
+    FOREIGN KEY (sq_coligacao, cd_eleicao, sg_uf, sg_ue) REFERENCES coligacao(sq_coligacao, cd_eleicao, sg_uf, sg_ue),
     FOREIGN KEY (cd_genero) REFERENCES genero(cd_genero),
     FOREIGN KEY (cd_grau_instrucao) REFERENCES grau_instrucao(cd_grau_instrucao),
     FOREIGN KEY (cd_estado_civil) REFERENCES estado_civil(cd_estado_civil),
