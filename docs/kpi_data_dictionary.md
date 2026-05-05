@@ -1,17 +1,17 @@
-# 📊 Dicionário de Dados — TSE 2024
+# Dicionário de Dados — TSE 2024
 
 Fonte: Tribunal Superior Eleitoral (TSE)
 Arquivo: `consulta_cand_2024_BRASIL.csv`
 
 ---
 
-## 📁 Descrição Geral
+## Descrição Geral
 
 Esta base contém informações cadastrais e eleitorais dos candidatos das eleições de 2024 no Brasil.
 
 ---
 
-## 🧾 Campos da Base
+## Campos da Base
 
 | Coluna                          | Tipo    | Descrição |
 |--------------------------------|---------|----------|
@@ -77,7 +77,7 @@ Esta base contém informações cadastrais e eleitorais dos candidatos das elei�
 
 ---
 
-## ⚠️ Observações
+## Observações
 
 * Campos `CD_*` representam códigos numéricos (podem ser usados como dimensões)
 * Campos `DS_*` são descrições legíveis
@@ -86,7 +86,7 @@ Esta base contém informações cadastrais e eleitorais dos candidatos das elei�
 
 ---
 
-## 🧠 Uso no Projeto
+## Uso no Projeto
 
 Essa base pode ser usada para:
 
