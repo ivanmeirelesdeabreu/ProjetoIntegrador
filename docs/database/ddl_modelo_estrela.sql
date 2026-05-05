@@ -70,7 +70,7 @@ SELECT
     ds_sit_tot_turno
 FROM eleicao.situacao_turno;
 
-CREATE OR REPLACE VIEW dw.dim_municipio AS
+CREATE OR REPLACE VIEW dw_eleicao.dim_municipio AS
 SELECT
     sg_uf || '-' || sg_ue AS municipio_key,
 
