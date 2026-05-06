@@ -70,34 +70,66 @@ SELECT
     ds_sit_tot_turno
 FROM eleicao.situacao_turno;
 
-CREATE OR REPLACE VIEW dw_eleicao.dim_municipio AS
-SELECT
-    sg_uf || '-' || sg_ue AS municipio_key,
 
-    sg_uf,
-    sg_ue,
-    nm_ue,
 
+CREATE TABLE dw_eleicao.dim_regiao (
+    regiao_id SERIAL PRIMARY KEY,
+    nome_regiao VARCHAR(20)
+);
+
+INSERT INTO dw_eleicao.dim_regiao (nome_regiao)
+SELECT DISTINCT
     CASE
-        WHEN sg_uf IN ('AC','AP','AM','PA','RO','RR','TO')
-            THEN 'Norte'
-
-        WHEN sg_uf IN ('AL','BA','CE','MA','PB','PE','PI','RN','SE')
-            THEN 'Nordeste'
-
-        WHEN sg_uf IN ('DF','GO','MT','MS')
-            THEN 'Centro-Oeste'
-
-        WHEN sg_uf IN ('ES','MG','RJ','SP')
-            THEN 'Sudeste'
-
-        WHEN sg_uf IN ('PR','RS','SC')
-            THEN 'Sul'
-
+        WHEN sg_uf IN ('AC','AP','AM','PA','RO','RR','TO') THEN 'Norte'
+        WHEN sg_uf IN ('AL','BA','CE','MA','PB','PE','PI','RN','SE') THEN 'Nordeste'
+        WHEN sg_uf IN ('DF','GO','MT','MS') THEN 'Centro-Oeste'
+        WHEN sg_uf IN ('ES','MG','RJ','SP') THEN 'Sudeste'
+        WHEN sg_uf IN ('PR','RS','SC') THEN 'Sul'
         ELSE 'Não Informado'
     END AS regiao
-
 FROM eleicao.municipio;
+
+
+CREATE TABLE dw_eleicao.dim_uf (
+    uf_id SERIAL PRIMARY KEY,
+    sg_uf CHAR(2),
+    regiao_id INT,
+    FOREIGN KEY (regiao_id) REFERENCES dw_eleicao.dim_regiao(regiao_id)
+);
+
+INSERT INTO dw_eleicao.dim_uf (sg_uf, regiao_id)
+SELECT DISTINCT
+    m.sg_uf,
+    r.regiao_id
+FROM eleicao.municipio m
+JOIN dw_eleicao.dim_regiao r
+  ON r.nome_regiao =
+    CASE
+        WHEN m.sg_uf IN ('AC','AP','AM','PA','RO','RR','TO') THEN 'Norte'
+        WHEN m.sg_uf IN ('AL','BA','CE','MA','PB','PE','PI','RN','SE') THEN 'Nordeste'
+        WHEN m.sg_uf IN ('DF','GO','MT','MS') THEN 'Centro-Oeste'
+        WHEN m.sg_uf IN ('ES','MG','RJ','SP') THEN 'Sudeste'
+        WHEN m.sg_uf IN ('PR','RS','SC') THEN 'Sul'
+        ELSE 'Não Informado'
+    END;
+
+CREATE TABLE dw_eleicao.dim_municipio (
+    municipio_id SERIAL PRIMARY KEY,
+    sg_ue VARCHAR(10),
+    nm_ue VARCHAR(255),
+    uf_id INT,
+    FOREIGN KEY (uf_id) REFERENCES dw_eleicao.dim_uf(uf_id)
+);
+
+INSERT INTO dw_eleicao.dim_municipio (sg_ue, nm_ue, uf_id)
+SELECT
+    m.sg_ue,
+    m.nm_ue,
+    u.uf_id
+FROM eleicao.municipio m
+JOIN dw_eleicao.dim_uf u
+  ON m.sg_uf = u.sg_uf ;
+
 
 CREATE OR REPLACE VIEW dw_eleicao.fato_candidatura AS
 SELECT
@@ -158,7 +190,3 @@ FROM eleicao.candidato c
 
 LEFT JOIN eleicao.eleicao e
        ON e.cd_eleicao = c.cd_eleicao;
-
-
-
-
