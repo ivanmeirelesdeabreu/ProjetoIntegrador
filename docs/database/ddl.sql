@@ -141,8 +141,7 @@ CREATE TABLE candidato (
     sq_candidato BIGINT PRIMARY KEY,
     
     cd_eleicao bigint,
-    sg_uf CHAR(2),
-    sg_ue VARCHAR(10),
+    cd_municipio bigint
     cd_cargo bigint,
     nr_partido bigint,
     nr_federacao bigint,
@@ -169,7 +168,7 @@ CREATE TABLE candidato (
     cd_sit_tot_turno bigint,
 
     FOREIGN KEY (cd_eleicao) REFERENCES eleicao(cd_eleicao),
-    FOREIGN KEY (sg_uf, sg_ue) REFERENCES municipio(sg_uf, sg_ue),
+    FOREIGN KEY (cd_municipio) REFERENCES municipio(cd_municipio),
     FOREIGN KEY (cd_cargo) REFERENCES cargo(cd_cargo),
     FOREIGN KEY (nr_partido) REFERENCES partido(nr_partido),
     FOREIGN KEY (nr_federacao) REFERENCES federacao(nr_federacao),
