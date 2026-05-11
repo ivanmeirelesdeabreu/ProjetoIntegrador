@@ -141,7 +141,7 @@ CREATE TABLE candidato (
     sq_candidato BIGINT PRIMARY KEY,
     
     cd_eleicao bigint,
-    cd_municipio bigint
+    cd_municipio bigint,
     cd_cargo bigint,
     nr_partido bigint,
     nr_federacao bigint,
