@@ -18,12 +18,51 @@ CREATE TABLE eleicao (
     tp_abrangencia VARCHAR(50)
 );
 
+CREATE TABLE regiao (
+    cd_regiao SERIAL PRIMARY KEY,
+    nm_regiao VARCHAR(30) UNIQUE
+);
+
+CREATE TABLE uf (
+    sg_uf CHAR(2) PRIMARY KEY,
+    nm_uf VARCHAR(50),
+    cd_regiao INT,
+
+    FOREIGN KEY (cd_regiao)
+        REFERENCES regiao(cd_regiao)
+);
+
 CREATE TABLE municipio (
+    cd_municipio SERIAL PRIMARY KEY,
+
     sg_uf CHAR(2),
     sg_ue VARCHAR(10),
-    nm_ue VARCHAR(150),
-    PRIMARY KEY (sg_uf, sg_ue)
+    nm_municipio VARCHAR(150),
+
+    FOREIGN KEY (sg_uf)
+        REFERENCES uf(sg_uf),
+
+    UNIQUE (sg_uf, sg_ue)
 );
+
+--CREATE TABLE municipio (
+--    cd_municipio SERIAL PRIMARY KEY,
+--    sg_uf CHAR(2),
+--    sg_ue VARCHAR(10),
+--    nm_municipio VARCHAR(150),
+
+--    FOREIGN KEY (sg_uf)
+--        REFERENCES uf(sg_uf),
+
+--    UNIQUE (sg_uf, sg_ue)
+--);
+
+--CREATE TABLE municipio (
+--    sg_uf CHAR(2),
+--    sg_ue VARCHAR(10),
+--    nm_ue VARCHAR(150),
+--    PRIMARY KEY (sg_uf, sg_ue)
+--);
 
 CREATE TABLE cargo (
     cd_cargo bigint PRIMARY KEY,
