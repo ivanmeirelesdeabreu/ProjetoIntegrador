@@ -1,142 +1,164 @@
+-- =========================================
+-- DW - ELEIÇÕES TSE
+-- MODELO ESTRELA
+-- =========================================
+
 DROP SCHEMA IF EXISTS dw_eleicao CASCADE;
+
 CREATE SCHEMA dw_eleicao;
+
 SET search_path TO dw_eleicao;
+
+-- =========================================
+-- DIMENSÃO ELEIÇÃO
+-- =========================================
 
 CREATE OR REPLACE VIEW dw_eleicao.dim_eleicao AS
 SELECT
-    cd_eleicao AS eleicao_key,
-    ano_eleicao,
-    nm_tipo_eleicao,
-    nr_turno,
-    ds_eleicao,
-    dt_eleicao,
-    tp_abrangencia
-FROM eleicao.eleicao;
+    e.cd_eleicao       AS eleicao_key,
+    e.ano_eleicao,
+    e.nm_tipo_eleicao,
+    e.nr_turno,
+    e.ds_eleicao,
+    e.dt_eleicao,
+    e.tp_abrangencia
+FROM eleicao.eleicao e;
+
+-- =========================================
+-- DIMENSÃO PARTIDO
+-- =========================================
 
 CREATE OR REPLACE VIEW dw_eleicao.dim_partido AS
 SELECT
-    nr_partido AS partido_key,
-    sg_partido,
-    nm_partido
-FROM eleicao.partido;
+    p.nr_partido AS partido_key,
+    p.sg_partido,
+    p.nm_partido
+FROM eleicao.partido p;
 
+-- =========================================
+-- DIMENSÃO CARGO
+-- =========================================
 
 CREATE OR REPLACE VIEW dw_eleicao.dim_cargo AS
 SELECT
-    cd_cargo AS cargo_key,
-    ds_cargo
-FROM eleicao.cargo;
+    c.cd_cargo AS cargo_key,
+    c.ds_cargo
+FROM eleicao.cargo c;
+
+-- =========================================
+-- DIMENSÃO GÊNERO
+-- =========================================
 
 CREATE OR REPLACE VIEW dw_eleicao.dim_genero AS
 SELECT
-    cd_genero AS genero_key,
-    ds_genero
-FROM eleicao.genero;
+    g.cd_genero AS genero_key,
+    g.ds_genero
+FROM eleicao.genero g;
 
+-- =========================================
+-- DIMENSÃO GRAU INSTRUÇÃO
+-- =========================================
 
 CREATE OR REPLACE VIEW dw_eleicao.dim_instrucao AS
 SELECT
-    cd_grau_instrucao AS instrucao_key,
-    ds_grau_instrucao
-FROM eleicao.grau_instrucao;
+    gi.cd_grau_instrucao AS instrucao_key,
+    gi.ds_grau_instrucao
+FROM eleicao.grau_instrucao gi;
+
+-- =========================================
+-- DIMENSÃO COR / RAÇA
+-- =========================================
 
 CREATE OR REPLACE VIEW dw_eleicao.dim_cor_raca AS
 SELECT
-    cd_cor_raca AS cor_raca_key,
-    ds_cor_raca
-FROM eleicao.cor_raca;
+    cr.cd_cor_raca AS cor_raca_key,
+    cr.ds_cor_raca
+FROM eleicao.cor_raca cr;
+
+-- =========================================
+-- DIMENSÃO OCUPAÇÃO
+-- =========================================
 
 CREATE OR REPLACE VIEW dw_eleicao.dim_ocupacao AS
 SELECT
-    cd_ocupacao AS ocupacao_key,
-    ds_ocupacao
-FROM eleicao.ocupacao;
+    o.cd_ocupacao AS ocupacao_key,
+    o.ds_ocupacao
+FROM eleicao.ocupacao o;
+
+-- =========================================
+-- DIMENSÃO ESTADO CIVIL
+-- =========================================
 
 CREATE OR REPLACE VIEW dw_eleicao.dim_estado_civil AS
 SELECT
-    cd_estado_civil AS estado_civil_key,
-    ds_estado_civil
-FROM eleicao.estado_civil;
+    ec.cd_estado_civil AS estado_civil_key,
+    ec.ds_estado_civil
+FROM eleicao.estado_civil ec;
+
+-- =========================================
+-- DIMENSÃO SITUAÇÃO CANDIDATURA
+-- =========================================
 
 CREATE OR REPLACE VIEW dw_eleicao.dim_situacao_candidatura AS
 SELECT
-    cd_situacao_candidatura AS situacao_candidatura_key,
-    ds_situacao_candidatura
-FROM eleicao.situacao_candidatura;
+    sc.cd_situacao_candidatura AS situacao_candidatura_key,
+    sc.ds_situacao_candidatura
+FROM eleicao.situacao_candidatura sc;
+
+-- =========================================
+-- DIMENSÃO SITUAÇÃO TURNO
+-- =========================================
 
 CREATE OR REPLACE VIEW dw_eleicao.dim_situacao_turno AS
 SELECT
-    cd_sit_tot_turno AS situacao_turno_key,
-    ds_sit_tot_turno
-FROM eleicao.situacao_turno;
+    st.cd_sit_tot_turno AS situacao_turno_key,
+    st.ds_sit_tot_turno
+FROM eleicao.situacao_turno st;
 
+-- =========================================
+-- DIMENSÃO REGIÃO
+-- =========================================
 
-
-CREATE TABLE dw_eleicao.dim_regiao (
-    regiao_id SERIAL PRIMARY KEY,
-    nome_regiao VARCHAR(20)
-);
-
-INSERT INTO dw_eleicao.dim_regiao (nome_regiao)
-SELECT DISTINCT
-    CASE
-        WHEN sg_uf IN ('AC','AP','AM','PA','RO','RR','TO') THEN 'Norte'
-        WHEN sg_uf IN ('AL','BA','CE','MA','PB','PE','PI','RN','SE') THEN 'Nordeste'
-        WHEN sg_uf IN ('DF','GO','MT','MS') THEN 'Centro-Oeste'
-        WHEN sg_uf IN ('ES','MG','RJ','SP') THEN 'Sudeste'
-        WHEN sg_uf IN ('PR','RS','SC') THEN 'Sul'
-        ELSE 'Não Informado'
-    END AS regiao
-FROM eleicao.municipio;
-
-
-CREATE TABLE dw_eleicao.dim_uf (
-    uf_id SERIAL PRIMARY KEY,
-    sg_uf CHAR(2),
-    regiao_id INT,
-    FOREIGN KEY (regiao_id) REFERENCES dw_eleicao.dim_regiao(regiao_id)
-);
-
-INSERT INTO dw_eleicao.dim_uf (sg_uf, regiao_id)
-SELECT DISTINCT
-    m.sg_uf,
-    r.regiao_id
-FROM eleicao.municipio m
-JOIN dw_eleicao.dim_regiao r
-  ON r.nome_regiao =
-    CASE
-        WHEN m.sg_uf IN ('AC','AP','AM','PA','RO','RR','TO') THEN 'Norte'
-        WHEN m.sg_uf IN ('AL','BA','CE','MA','PB','PE','PI','RN','SE') THEN 'Nordeste'
-        WHEN m.sg_uf IN ('DF','GO','MT','MS') THEN 'Centro-Oeste'
-        WHEN m.sg_uf IN ('ES','MG','RJ','SP') THEN 'Sudeste'
-        WHEN m.sg_uf IN ('PR','RS','SC') THEN 'Sul'
-        ELSE 'Não Informado'
-    END;
-
-CREATE TABLE dw_eleicao.dim_municipio (
-    municipio_id SERIAL PRIMARY KEY,
-    sg_ue VARCHAR(10),
-    nm_ue VARCHAR(255),
-    uf_id INT,
-    FOREIGN KEY (uf_id) REFERENCES dw_eleicao.dim_uf(uf_id)
-);
-
-INSERT INTO dw_eleicao.dim_municipio (sg_ue, nm_ue, uf_id)
+CREATE OR REPLACE VIEW dw_eleicao.dim_regiao AS
 SELECT
-    m.sg_ue,
-    m.nm_ue,
-    u.uf_id
-FROM eleicao.municipio m
-JOIN dw_eleicao.dim_uf u
-  ON m.sg_uf = u.sg_uf ;
+    r.cd_regiao AS regiao_key,
+    r.nm_regiao
+FROM eleicao.regiao r;
 
+-- =========================================
+-- DIMENSÃO UF
+-- =========================================
+
+CREATE OR REPLACE VIEW dw_eleicao.dim_uf AS
+SELECT
+    u.sg_uf      AS uf_key,
+    u.nm_uf,
+    u.cd_regiao  AS regiao_key
+FROM eleicao.uf u;
+
+-- =========================================
+-- DIMENSÃO MUNICÍPIO
+-- =========================================
+
+CREATE OR REPLACE VIEW dw_eleicao.dim_municipio AS
+SELECT
+    m.cd_municipio AS municipio_key,
+    m.sg_ue,
+    m.nm_municipio,
+    m.sg_uf        AS uf_key
+FROM eleicao.municipio m;
+
+-- =========================================
+-- FATO CANDIDATURA
+-- =========================================
 
 CREATE OR REPLACE VIEW dw_eleicao.fato_candidatura AS
 SELECT
 
+    -- IDENTIFICADOR
     c.sq_candidato,
 
-    -- Chaves
+    -- CHAVES DIMENSIONAIS
     c.cd_eleicao              AS eleicao_key,
     c.nr_partido              AS partido_key,
     c.cd_cargo                AS cargo_key,
@@ -148,11 +170,16 @@ SELECT
     c.cd_situacao_candidatura AS situacao_candidatura_key,
     c.cd_sit_tot_turno        AS situacao_turno_key,
 
-    c.sg_uf,
-    c.sg_ue,
-    c.sg_uf || '-' || c.sg_ue AS municipio_key,
+    c.cd_municipio            AS municipio_key,
 
-    -- Métricas
+    -- DADOS DO CANDIDATO
+    c.nr_candidato,
+    c.nm_candidato,
+    c.nm_urna,
+    c.nm_social,
+    c.sg_uf_nascimento,
+
+    -- MÉTRICAS
     1 AS qt_candidatos,
 
     CASE
@@ -179,6 +206,7 @@ SELECT
         ELSE 0
     END AS qt_candidatura_valida,
 
+    -- IDADE
     EXTRACT(
         YEAR FROM AGE(
             e.dt_eleicao,
