@@ -45,25 +45,6 @@ CREATE TABLE municipio (
     UNIQUE (sg_uf, sg_ue)
 );
 
---CREATE TABLE municipio (
---    cd_municipio SERIAL PRIMARY KEY,
---    sg_uf CHAR(2),
---    sg_ue VARCHAR(10),
---    nm_municipio VARCHAR(150),
-
---    FOREIGN KEY (sg_uf)
---        REFERENCES uf(sg_uf),
-
---    UNIQUE (sg_uf, sg_ue)
---);
-
---CREATE TABLE municipio (
---    sg_uf CHAR(2),
---    sg_ue VARCHAR(10),
---    nm_ue VARCHAR(150),
---    PRIMARY KEY (sg_uf, sg_ue)
---);
-
 CREATE TABLE cargo (
     cd_cargo bigint PRIMARY KEY,
     ds_cargo VARCHAR(100)
@@ -81,12 +62,6 @@ CREATE TABLE federacao (
     sg_federacao VARCHAR(50),
     ds_composicao_federacao TEXT
 );
-
---CREATE TABLE coligacao (
---    sq_coligacao BIGINT PRIMARY KEY,
---    nm_coligacao VARCHAR(150),
---    ds_composicao_coligacao TEXT
---);
 
 CREATE TABLE coligacao (
     sq_coligacao BIGINT,
@@ -180,4 +155,28 @@ CREATE TABLE candidato (
     FOREIGN KEY (cd_ocupacao) REFERENCES ocupacao(cd_ocupacao),
     FOREIGN KEY (cd_situacao_candidatura) REFERENCES situacao_candidatura(cd_situacao_candidatura),
     FOREIGN KEY (cd_sit_tot_turno) REFERENCES situacao_turno(cd_sit_tot_turno)
+);
+
+CREATE TABLE tipo_bem (
+    cd_tipo_bem bigint PRIMARY KEY,
+    ds_tipo_bem VARCHAR(200)
+);
+
+CREATE TABLE bem_candidato (
+    id_bem SERIAL PRIMARY KEY,
+    sq_candidato BIGINT,
+    ano_eleicao INT,
+    nr_ordem_bem INT,
+    cd_tipo_bem BIGINT,
+    ds_bem TEXT,
+    vr_bem NUMERIC(18,2),
+    dt_ultima_atualizacao DATE,
+
+    FOREIGN KEY (sq_candidato)
+        REFERENCES candidato(sq_candidato),
+
+    FOREIGN KEY (cd_tipo_bem)
+        REFERENCES tipo_bem(cd_tipo_bem),
+
+    UNIQUE (sq_candidato, ano_eleicao, nr_ordem_bem)
 );
