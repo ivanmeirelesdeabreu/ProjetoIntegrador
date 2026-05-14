@@ -10,7 +10,7 @@ Os arquivos estão sendo baixados de https://dadosabertos.tse.jus.br/dataset/can
 Devem ser gravados no diretório local <ProjetoIntegrador>\data\raw e descompactados nesse diretório
 a aplicação etl irá buscar apenas os diretórios descompactados e importar no banco.
 
-Não esquecer de excluir o arquivo denominado /*BRASIL/*.csv pois lemos arquivos individuais por estado.
+Não esquecer de excluir o arquivo denominado `*BRASIL*.csv` pois lemos arquivos individuais por estado.
 
 ---
 
