@@ -3,6 +3,15 @@
 Este documento define o padrão de contribuição do projeto.  
 Siga estas diretrizes para garantir organização, rastreabilidade e qualidade.
 
+
+## Fonte de dados
+
+Os arquivos estão sendo baixados de https://dadosabertos.tse.jus.br/dataset/candidatos-<ano>
+Devem ser gravados no diretório local <ProjetoIntegrador>\data\raw e descompactados nesse diretório
+a aplicação etl irá buscar apenas os diretórios descompactados e importar no banco.
+
+Não esquecer de excluir o arquivo denominado *BRASIL*.csv pois lemos arquivos individuais por estado.
+
 ---
 
 ## Fluxo de Trabalho
