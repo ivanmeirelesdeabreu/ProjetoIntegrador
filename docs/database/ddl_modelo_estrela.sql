@@ -55,16 +55,19 @@ FROM eleicao.eleicao e;
 --DROP MATERIALIZED VIEW IF EXISTS eleicao.fato_eleicao;
 --CREATE MATERIALIZED VIEW eleicao.fato_eleicao AS
 
+
 CREATE OR REPLACE VIEW eleicao.fato_eleicao AS 
 SELECT 
     e.cd_eleicao, 
     e.ano_eleicao, 
     e.dt_eleicao,
     e.nr_turno, 
+    e.cd_abrangencia,
+    a.tp_abrangencia,
     c.cd_cargo, 
     c.sq_candidato, 
     c.nr_partido, 
-    c.cd_municipio, 
+    c.cd_municipio_tse, 
     c.nr_federacao, 
     c.sq_coligacao,
     -- CHAVES DE PERFIL (Para filtros diretos nas dimensões)
@@ -74,7 +77,7 @@ SELECT
     c.cd_situacao_candidatura,
     c.cd_sit_tot_turno,
     -- MÉTRICAS
-    1 AS qt_candidatos,
+    CASE WHEN e.nr_turno = 1 THEN 1 ELSE 0 END AS qt_candidatos,
     CASE WHEN c.nr_partido IS NOT NULL THEN 1 ELSE 0 END AS qt_com_partido,
     CASE WHEN c.nr_federacao IS NOT NULL THEN 1 ELSE 0 END AS qt_com_federacao,
     CASE WHEN c.cd_sit_tot_turno IN (1,2,3) THEN 1 ELSE 0 END AS qt_eleitos,
@@ -86,14 +89,15 @@ SELECT
     CASE WHEN c.nm_social IS NOT NULL THEN 1 ELSE 0 END AS qt_usa_nome_social    
     -- Removida a vírgula aqui antes do FROM
 FROM eleicao.eleicao e 
-LEFT JOIN eleicao.candidato c ON c.cd_eleicao = e.cd_eleicao;
+LEFT JOIN eleicao.candidato c ON c.cd_eleicao = e.cd_eleicao
+LEFT JOIN eleicao.abrangencia a ON a.cd_abrangencia = e.cd_abrangencia;
 
 CREATE OR REPLACE VIEW eleicao.dim_eleicao AS
 select
 	e.cd_eleicao,
     e.nm_tipo_eleicao,
     e.ds_eleicao,
-    e.tp_abrangencia
+    e.cd_abrangencia
 FROM eleicao.eleicao e;
 
 -- =========================================
@@ -214,8 +218,7 @@ FROM eleicao.uf u;
 
 CREATE OR REPLACE VIEW eleicao.dim_municipio AS
 SELECT
-    m.cd_municipio,
-    m.sg_ue,
+    m.cd_municipio_tse,
     m.nm_municipio,
     m.sg_uf
 FROM eleicao.municipio m;
@@ -239,8 +242,6 @@ FROM eleicao.federacao f;
 CREATE OR REPLACE VIEW eleicao.dim_coligacao AS
 SELECT
     c.sq_coligacao,
-    c.cd_eleicao,
-    c.cd_municipio,
     c.nm_coligacao,
     c.ds_composicao_coligacao
 FROM eleicao.coligacao c;
@@ -260,10 +261,7 @@ FROM eleicao.tipo_bem tb;
 -- =========================================
 CREATE OR REPLACE VIEW eleicao.dim_candidato AS 
 SELECT 
-<<<<<<< HEAD
 	c.cd_eleicao,
-=======
->>>>>>> 4653a39739fdcc3b4e234f8ee597f811994968c9
     c.sq_candidato, 
     c.nr_candidato, 
     c.nm_candidato, 
@@ -284,21 +282,14 @@ LEFT JOIN eleicao.eleicao e ON e.cd_eleicao = c.cd_eleicao;
 CREATE OR REPLACE VIEW eleicao.fato_prestacao_contas AS 
 SELECT 
     b.id_bem,
+    b.cd_eleicao,
     b.sq_candidato,
     b.cd_tipo_bem, 
-<<<<<<< HEAD
-    b.cd_eleicao,
-=======
-    c.cd_eleicao,
->>>>>>> 4653a39739fdcc3b4e234f8ee597f811994968c9
-    c.cd_municipio,
+    c.cd_municipio_tse,
     b.vr_bem,
     1 AS qt_bens,
     CASE WHEN b.vr_bem > 1000000 THEN 1 ELSE 0 END AS qt_bens_milionarios
 FROM eleicao.bem_candidato b
-<<<<<<< HEAD
 LEFT JOIN eleicao.candidato c ON  b.sq_candidato = c.sq_candidato 
     AND b.cd_eleicao = c.cd_eleicao; 
-=======
-LEFT JOIN eleicao.candidato c ON c.sq_candidato = b.sq_candidato;
->>>>>>> 4653a39739fdcc3b4e234f8ee597f811994968c9
+
