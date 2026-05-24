@@ -260,6 +260,7 @@ FROM eleicao.tipo_bem tb;
 -- =========================================
 CREATE OR REPLACE VIEW eleicao.dim_candidato AS 
 SELECT 
+	c.cd_eleicao,
     c.sq_candidato, 
     c.nr_candidato, 
     c.nm_candidato, 
@@ -282,10 +283,11 @@ SELECT
     b.id_bem,
     b.sq_candidato,
     b.cd_tipo_bem, 
-    c.cd_eleicao,
+    b.cd_eleicao,
     c.cd_municipio,
     b.vr_bem,
     1 AS qt_bens,
     CASE WHEN b.vr_bem > 1000000 THEN 1 ELSE 0 END AS qt_bens_milionarios
 FROM eleicao.bem_candidato b
-LEFT JOIN eleicao.candidato c ON c.sq_candidato = b.sq_candidato;
+LEFT JOIN eleicao.candidato c ON  b.sq_candidato = c.sq_candidato 
+    AND b.cd_eleicao = c.cd_eleicao; 

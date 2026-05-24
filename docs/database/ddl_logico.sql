@@ -112,11 +112,9 @@ CREATE TABLE situacao_turno (
 );
 
 CREATE TABLE candidato (
-    sq_candidato BIGINT PRIMARY KEY,
-    
     cd_eleicao bigint,
+    sq_candidato bigint,
     cd_municipio bigint,
-
     cd_cargo bigint,
     nr_partido bigint,
     nr_federacao bigint,
@@ -141,6 +139,8 @@ CREATE TABLE candidato (
     
     cd_situacao_candidatura bigint,
     cd_sit_tot_turno bigint,
+     -- PRIMARY KEY COMPOSTA
+    PRIMARY KEY (cd_eleicao, sq_candidato),
 
     FOREIGN KEY (cd_eleicao) REFERENCES eleicao(cd_eleicao),
     FOREIGN KEY (cd_municipio) REFERENCES municipio(cd_municipio),
@@ -164,6 +164,7 @@ CREATE TABLE tipo_bem (
 
 CREATE TABLE bem_candidato (
     id_bem SERIAL PRIMARY KEY,
+    cd_eleicao bigint,
     sq_candidato BIGINT,
     ano_eleicao INT,
     nr_ordem_bem INT,
@@ -172,8 +173,8 @@ CREATE TABLE bem_candidato (
     vr_bem NUMERIC(18,2),
     dt_ultima_atualizacao DATE,
 
-    FOREIGN KEY (sq_candidato)
-        REFERENCES candidato(sq_candidato),
+    FOREIGN KEY (cd_eleicao, sq_candidato)
+        REFERENCES candidato(cd_eleicao, sq_candidato),
 
     FOREIGN KEY (cd_tipo_bem)
         REFERENCES tipo_bem(cd_tipo_bem),
