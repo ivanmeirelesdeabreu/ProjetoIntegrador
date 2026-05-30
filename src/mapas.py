@@ -25,42 +25,7 @@ def tratar_ue(df):
 
     return df[df["cd_municipio_tse"].notna()]
 
-'''
-def tratar_ue(df):
 
-    # caso exista SG_UE
-    if "SG_UE" in df.columns:
-
-        sg_ue = df["SG_UE"].astype(str)
-
-        mask_numero = sg_ue.str.isdigit()
-
-        # municípios
-        df.loc[mask_numero, "cd_municipio_tse"] = sg_ue[mask_numero]
-
-        # UFs antigas
-        df.loc[~mask_numero, "sg_uf"] = sg_ue[~mask_numero]
-
-    # arquivos sem SG_UE
-    elif "SG_UF" in df.columns:
-
-        df["sg_uf"] = df["SG_UF"]
-
-    return df
-
-
-def tratar_ue(df):
-
-    mask_numero = df["cd_municipio_tse"].astype(str).str.isdigit()
-
-    # cria sg_ue para os não numéricos
-    df.loc[~mask_numero, "sg_ue"] = df.loc[~mask_numero, "cd_municipio_tse"]
-
-    # opcional: limpar cd_municipio_tse dos não numéricos
-    df.loc[~mask_numero, "cd_municipio_tse"] = None
-
-    return df
-'''
 # =========================================================
 # MAPAS
 # =========================================================
@@ -77,10 +42,11 @@ MAPAS = {
 
         tabela="abrangencia",
 
-        pk=["tp_abrangencia"],
+        pk=["cd_abrangencia"],
 
         mapa={
 
+            "CD_ABRANGENCIA": "cd_abrangencia",
             "TP_ABRANGENCIA": "tp_abrangencia"
         }
     ),
@@ -98,21 +64,15 @@ MAPAS = {
         pk=["cd_eleicao"],
 
         mapa={
-
             "CD_ELEICAO": "cd_eleicao",
-
             "ANO_ELEICAO": "ano_eleicao",
-
             "NM_TIPO_ELEICAO": "nm_tipo_eleicao",
-
             "NR_TURNO": "nr_turno",
-
             "DS_ELEICAO": "ds_eleicao",
-
-            "DT_ELEICAO": "dt_eleicao"
-
-            # cd_abrangencia será resolvido depois
-            # via lookup da tabela abrangencia
+            "DT_ELEICAO": "dt_eleicao",
+            "CD_ABRANGENCIA": "cd_abrangencia",
+            "TP_ABRANGENCIA": "tp_abrangencia"
+  
         }
     ),
 
@@ -155,7 +115,6 @@ MAPAS = {
         mapa={
 
             "CD_CARGO": "cd_cargo",
-
             "DS_CARGO": "ds_cargo"
         }
     ),
@@ -175,9 +134,7 @@ MAPAS = {
         mapa={
 
             "NR_PARTIDO": "nr_partido",
-
             "SG_PARTIDO": "sg_partido",
-
             "NM_PARTIDO": "nm_partido"
         }
     ),
@@ -197,11 +154,8 @@ MAPAS = {
         mapa={
 
             "NR_FEDERACAO": "nr_federacao",
-
             "NM_FEDERACAO": "nm_federacao",
-
             "SG_FEDERACAO": "sg_federacao",
-
             "DS_COMPOSICAO_FEDERACAO": "ds_composicao_federacao"
         }
     ),
@@ -221,7 +175,6 @@ MAPAS = {
         mapa={
 
             "CD_GENERO": "cd_genero",
-
             "DS_GENERO": "ds_genero"
         }
     ),
@@ -241,7 +194,6 @@ MAPAS = {
         mapa={
 
             "CD_GRAU_INSTRUCAO": "cd_grau_instrucao",
-
             "DS_GRAU_INSTRUCAO": "ds_grau_instrucao"
         }
     ),
@@ -253,7 +205,6 @@ MAPAS = {
     "estado_civil": MapaImportacao(
 
         nome="estado_civil",
-
         tabela="estado_civil",
 
         pk=["cd_estado_civil"],
@@ -261,7 +212,6 @@ MAPAS = {
         mapa={
 
             "CD_ESTADO_CIVIL": "cd_estado_civil",
-
             "DS_ESTADO_CIVIL": "ds_estado_civil"
         }
     ),
@@ -281,7 +231,6 @@ MAPAS = {
         mapa={
 
             "CD_COR_RACA": "cd_cor_raca",
-
             "DS_COR_RACA": "ds_cor_raca"
         }
     ),
@@ -301,7 +250,6 @@ MAPAS = {
         mapa={
 
             "CD_OCUPACAO": "cd_ocupacao",
-
             "DS_OCUPACAO": "ds_ocupacao"
         }
     ),
@@ -321,7 +269,6 @@ MAPAS = {
         mapa={
 
             "CD_SITUACAO_CANDIDATURA": "cd_situacao_candidatura",
-
             "DS_SITUACAO_CANDIDATURA": "ds_situacao_candidatura"
         }
     ),
@@ -341,7 +288,6 @@ MAPAS = {
         mapa={
 
             "CD_SIT_TOT_TURNO": "cd_sit_tot_turno",
-
             "DS_SIT_TOT_TURNO": "ds_sit_tot_turno"
         }
     ),
@@ -372,7 +318,6 @@ MAPAS = {
             "DT_NASCIMENTO": "dt_nascimento",
             "DS_EMAIL": "ds_email",
             "SG_UF_NASCIMENTO": "sg_uf_nascimento",
-            "CD_MUNICIPIO_TSE": "cd_municipio_tse",
             "SG_UF": "sg_uf"
 
         }
@@ -398,33 +343,19 @@ MAPAS = {
         mapa={
 
             "SQ_CANDIDATO": "sq_candidato",
-
             "CD_ELEICAO": "cd_eleicao",
-
             "NR_TURNO": "nr_turno",
-
             "CD_CARGO": "cd_cargo",
-
             "NR_CANDIDATO": "nr_candidato",
-
             "NR_FEDERACAO": "nr_federacao",
-
             "NM_URNA_CANDIDATO": "nm_urna_candidato",
-
             "NR_PARTIDO": "nr_partido",
-
             "SG_UF": "sg_uf",
-
             "SG_UE": "sg_ue",
-
             "NM_UE": "nm_ue",
-
             "CD_SITUACAO_CANDIDATURA": "cd_situacao_candidatura",
-
             "CD_SIT_TOT_TURNO": "cd_sit_tot_turno",
-
             "ST_CANDIDATO_INSERIDO_URNA": "st_candidato_inserido_urna",
-
             "SQ_COLIGACAO": "sq_coligacao"
         }
     ),
@@ -481,7 +412,6 @@ MAPAS = {
 # =========================================================
 
 ORDEM_CARGA = [
-    "abrangencia",
     "cargo",
     "partido",
     "federacao",
@@ -509,7 +439,6 @@ TABELAS_UPSERT = [
 
 GRUPOS_BASE  = {
     "dimensoes": [
-        "abrangencia",
         "eleicao",
         "cargo",
         "partido",

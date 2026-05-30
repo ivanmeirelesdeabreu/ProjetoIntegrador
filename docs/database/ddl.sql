@@ -116,7 +116,7 @@ CREATE TABLE candidato (
 	cd_genero INT,	
 	cd_estado_civil INT,
 	cd_cor_raca INT,
-	cd_ocupacao bigint,	
+	cd_ocupacao INT,	
 	cd_grau_instrucao INT,
 	dt_nascimento DATE,
 	ds_email VARCHAR(150),	
@@ -151,7 +151,7 @@ CREATE TABLE candidatura (
     cd_situacao_candidatura      INT,
     cd_sit_tot_turno             INT,
     st_candidato_inserido_urna   VARCHAR(10),
-    sq_coligacao                 INT,	
+    sq_coligacao                 BIGINT,	
 
     FOREIGN KEY (sq_candidato) REFERENCES candidato(sq_candidato),
     FOREIGN KEY (cd_municipio_tse) REFERENCES municipio(cd_municipio_tse),
@@ -194,4 +194,4 @@ CREATE TABLE bem_candidato (
     CONSTRAINT uk_bem_candidatura UNIQUE (id_candidatura, nr_ordem_bem)
 
 );
-
+commit

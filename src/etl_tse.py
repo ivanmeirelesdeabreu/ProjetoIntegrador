@@ -19,22 +19,13 @@ from mapas import MAPAS, ORDEM_CARGA, TABELAS_UPSERT, ORDEM_CARGA, MAPAS_POR_TIP
 # 1. configurações de conexão
 # =========================================
 # Configurações da conexão com o banco de dados
-'''
+
 db_config = {
     "user": "2422120019_Ivan",
     "pass": "2422120019_Ivan",
     "host": "dataiesb.iesbtech.com.br",
     "port": "5432",
     "db": "2422120019_Ivan",
-    "schema": "eleicao_des"
-}
-'''
-db_config = {
-    "user": "postgres",
-    "pass": quote_plus("pstComunidade@9"),
-    "host": "localhost",
-    "port": "5432",
-    "db": "tse",
     "schema": "eleicao"
 }
 
@@ -61,6 +52,65 @@ except Exception as e:
 # =========================================
 # 3. processamento dos arquivos
 # =========================================
+
+def adicionar_id_abrangencia(df_eleicao, engine):
+
+    sql = """
+            SELECT
+                cd_abrangencia AS CD_ABRANGENCIA,
+                tp_abrangencia AS TP_ABRANGENCIA
+            FROM eleicao.abrangencia
+        """
+    df_abrangencia = pd.read_sql(sql, engine)
+
+    #print(f"df_eleicao colunas: {df_eleicao.columns.tolist()}")
+
+    #print(f"df_abrangencia colunas: {df_abrangencia.columns.tolist()}")
+    #print(f"df_abrangencia colunas: {df_abrangencia.columns.str.upper().tolist()}")
+ 
+    df_eleicao = df_eleicao.merge(
+            df_abrangencia[["cd_abrangencia", "tp_abrangencia"]],
+            on=["tp_abrangencia"],
+            how="left"
+    )
+    #print("depois do merge:")
+    #print(f"df_abrangencia colunas: {df_abrangencia.columns.tolist()}")
+    
+    #("depois do merge:")
+    #print(df_eleicao.columns.tolist())
+    #print(df_candidatura.columns.tolist())
+
+    return df_eleicao    
+
+
+
+def corrigir_eleicao_pos_importacao(df):
+     
+    df = df.drop(columns=["tp_abrangencia"], errors="ignore")
+
+    return df
+
+
+def corrigir_municipio_pos_importacao(df):
+
+    if "sg_ue" not in df.columns:
+        return df
+
+    s = df["sg_ue"].astype(str).str.strip()
+
+    # apenas números válidos
+    mask_num = s.str.fullmatch(r"\d+")
+
+    # só preenche se ainda estiver nulo
+    if "cd_municipio_tse" not in df.columns:
+        df["cd_municipio_tse"] = None
+
+    df.loc[mask_num & df["cd_municipio_tse"].isna(), "cd_municipio_tse"] = (
+        pd.to_numeric(s[mask_num], errors="coerce")
+    )
+
+    return df
+
 def tratar_ue(df):
     #print("passei no tratar_ue dentro de etl....")
 
@@ -84,24 +134,6 @@ def tratar_ue(df):
 
     return df
 
-
-'''
-def tratar_ue(df):
-
-    # garante string
-    sg_ue = df["SG_UE"].astype(str)
-
-    # identifica números
-    mask_numero = sg_ue.str.isdigit()
-
-    # município quando for número
-    df.loc[mask_numero, "cd_municipio_tse"] = sg_ue[mask_numero]
-
-    # uf quando NÃO for número
-    df.loc[~mask_numero, "sg_uf"] = sg_ue[~mask_numero]
-
-    return df
-'''
 def adicionar_id_candidatura(df_bens, engine):
     sql = """
             SELECT
@@ -128,7 +160,7 @@ def adicionar_id_candidatura(df_bens, engine):
             how="left"
     )
     
-    #("depois do merge:")
+    #print("depois do merge:")
     #print(df_bens.columns.tolist())
     #print(df_candidatura.columns.tolist())
 
@@ -140,6 +172,19 @@ def inserir_dados(df, tabela, engine, nome_arquivo, pk=None, upsert=False):
         return
     try:
 
+        # =========================
+        # CORREÇÕES PRÉ INSERT
+        # =========================
+
+        corrigir_municipio_pos_importacao(df)
+ 
+
+  
+        # =========================
+        # NORMALIZAÇÃO
+        # =========================            
+
+
         df = df.astype(object)
 
         df = df.where(
@@ -147,8 +192,14 @@ def inserir_dados(df, tabela, engine, nome_arquivo, pk=None, upsert=False):
             None
         )
 
-        registros = df.to_dict(orient="records")
+        if tabela == "eleicao":
 
+            df_eleicao = df.copy()
+            df_eleicao = corrigir_eleicao_pos_importacao(df_eleicao)
+            #print(df_eleicao.columns.tolist()) 
+            df = df_eleicao
+
+        registros = df.to_dict(orient="records")
         colunas = list(df.columns)
         colunas_sql = ", ".join(colunas)
         placeholders = ", ".join([f":{c}" for c in colunas])
@@ -286,11 +337,15 @@ def processar_arquivo(caminho_csv, tipo="candidato"):
                 continue
 
             df_tabela = df_tabela.drop_duplicates()
+            #print(df_tabela.columns.tolist())
    
             # regra especial bens (se existir nesse tipo)
 
             if nome_mapa == "bem_candidato":
                 df_tabela = adicionar_id_candidatura(df_tabela, engine)
+
+            if nome_mapa == "eleicao":
+                df_tabela = adicionar_id_abrangencia(df_tabela, engine)
 
             dfs_processados[nome_mapa] = df_tabela
 

@@ -3,293 +3,591 @@
 -- MODELO ESTRELA
 -- =========================================
 
---DROP SCHEMA IF EXISTS dw_eleicao CASCADE;
-
---CREATE SCHEMA dw_eleicao;
-
 SET search_path TO eleicao;
 
--- =========================================
--- DIMENSÃO TEMPO
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_tempo AS
+CREATE OR REPLACE VIEW dim_eleicao AS
+SELECT
+    e.cd_eleicao,
+    e.ano_eleicao,
+    e.nm_tipo_eleicao,
+    e.nr_turno,
+    e.ds_eleicao,
+    e.dt_eleicao,
+    a.tp_abrangencia
+FROM eleicao e
+LEFT JOIN abrangencia a
+    ON a.cd_abrangencia = e.cd_abrangencia;
+--
+CREATE OR REPLACE VIEW dim_tempo AS
 SELECT DISTINCT
     e.dt_eleicao,
-    e.ano_eleicao,
-    EXTRACT(YEAR  FROM e.dt_eleicao) AS ano,
+    EXTRACT(YEAR FROM e.dt_eleicao) AS ano,
     EXTRACT(MONTH FROM e.dt_eleicao) AS mes,
-    EXTRACT(DAY   FROM e.dt_eleicao) AS dia,
-    EXTRACT(QUARTER FROM e.dt_eleicao) AS trimestre,
-    CASE EXTRACT(MONTH FROM e.dt_eleicao)
-        WHEN 1 THEN 'Janeiro'
-        WHEN 2 THEN 'Fevereiro'
-        WHEN 3 THEN 'Março'
-        WHEN 4 THEN 'Abril'
-        WHEN 5 THEN 'Maio'
-        WHEN 6 THEN 'Junho'
-        WHEN 7 THEN 'Julho'
-        WHEN 8 THEN 'Agosto'
-        WHEN 9 THEN 'Setembro'
-        WHEN 10 THEN 'Outubro'
-        WHEN 11 THEN 'Novembro'
-        WHEN 12 THEN 'Dezembro'
-    END AS nm_mes,
-    CASE
-        WHEN EXTRACT(MONTH FROM e.dt_eleicao) IN (1,2,3)
-        THEN '1º Trimestre'
-
-        WHEN EXTRACT(MONTH FROM e.dt_eleicao) IN (4,5,6)
-        THEN '2º Trimestre'
-
-        WHEN EXTRACT(MONTH FROM e.dt_eleicao) IN (7,8,9)
-        THEN '3º Trimestre'
-        ELSE '4º Trimestre'
-    END AS nm_trimestre
-FROM eleicao.eleicao e;
-
--- =========================================
--- FATO ELEIÇÃO
--- =========================================
---REFRESH MATERIALIZED VIEW eleicao.fato_eleicao;
---DROP MATERIALIZED VIEW IF EXISTS eleicao.fato_eleicao;
---CREATE MATERIALIZED VIEW eleicao.fato_eleicao AS
-
-
-CREATE OR REPLACE VIEW eleicao.fato_eleicao AS 
-SELECT 
-    e.cd_eleicao, 
-    e.ano_eleicao, 
-    e.dt_eleicao,
-    e.nr_turno, 
-    e.cd_abrangencia,
-    a.tp_abrangencia,
-    c.cd_cargo, 
-    c.sq_candidato, 
-    c.nr_partido, 
-    c.cd_municipio_tse, 
-    c.nr_federacao, 
-    c.sq_coligacao,
-    -- CHAVES DE PERFIL (Para filtros diretos nas dimensões)
-    c.cd_genero,
-    c.cd_cor_raca,
-    c.cd_grau_instrucao,
-    c.cd_situacao_candidatura,
-    c.cd_sit_tot_turno,
-    -- MÉTRICAS
-    CASE WHEN e.nr_turno = 1 THEN 1 ELSE 0 END AS qt_candidatos,
-    CASE WHEN c.nr_partido IS NOT NULL THEN 1 ELSE 0 END AS qt_com_partido,
-    CASE WHEN c.nr_federacao IS NOT NULL THEN 1 ELSE 0 END AS qt_com_federacao,
-    CASE WHEN c.cd_sit_tot_turno IN (1,2,3) THEN 1 ELSE 0 END AS qt_eleitos,
-    CASE WHEN c.cd_sit_tot_turno = 4 THEN 1 ELSE 0 END AS qt_nao_eleitos,
-    CASE WHEN c.cd_sit_tot_turno = 5 THEN 1 ELSE 0 END AS qt_suplentes,
-    CASE WHEN c.cd_situacao_candidatura > 0 THEN 1 ELSE 0 END AS qt_candidatura_valida,
-    CASE WHEN c.cd_genero = 2 THEN 1 ELSE 0 END AS qt_homens,
-    CASE WHEN c.cd_genero = 4 THEN 1 ELSE 0 END AS qt_mulheres,
-    CASE WHEN c.nm_social IS NOT NULL THEN 1 ELSE 0 END AS qt_usa_nome_social    
-    -- Removida a vírgula aqui antes do FROM
-FROM eleicao.eleicao e 
-LEFT JOIN eleicao.candidato c ON c.cd_eleicao = e.cd_eleicao
-LEFT JOIN eleicao.abrangencia a ON a.cd_abrangencia = e.cd_abrangencia;
-
-CREATE OR REPLACE VIEW eleicao.dim_eleicao AS
-select
-	e.cd_eleicao,
-    e.nm_tipo_eleicao,
-    e.ds_eleicao,
-    e.cd_abrangencia
-FROM eleicao.eleicao e;
-
--- =========================================
--- DIMENSÃO PARTIDO
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_partido AS
-SELECT
-    p.nr_partido,
-    p.sg_partido,
-    p.nm_partido
-FROM eleicao.partido p;
-
--- =========================================
--- DIMENSÃO CARGO
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_cargo AS
-SELECT
-    c.cd_cargo,
-    c.ds_cargo
-FROM eleicao.cargo c;
-
--- =========================================
--- DIMENSÃO GÊNERO
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_genero AS
-SELECT
-    g.cd_genero,
-    g.ds_genero
-FROM eleicao.genero g;
-
--- =========================================
--- DIMENSÃO GRAU INSTRUÇÃO
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_instrucao AS
-SELECT
-    gi.cd_grau_instrucao,
-    gi.ds_grau_instrucao
-FROM eleicao.grau_instrucao gi;
-
--- =========================================
--- DIMENSÃO COR / RAÇA
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_cor_raca AS
-SELECT
-    cr.cd_cor_raca,
-    cr.ds_cor_raca
-FROM eleicao.cor_raca cr;
-
--- =========================================
--- DIMENSÃO OCUPAÇÃO
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_ocupacao AS
-SELECT
-    o.cd_ocupacao,
-    o.ds_ocupacao
-FROM eleicao.ocupacao o;
-
--- =========================================
--- DIMENSÃO ESTADO CIVIL
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_estado_civil AS
-SELECT
-    ec.cd_estado_civil,
-    ec.ds_estado_civil
-FROM eleicao.estado_civil ec;
-
--- =========================================
--- DIMENSÃO SITUAÇÃO CANDIDATURA
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_situacao_candidatura AS
-SELECT
-    sc.cd_situacao_candidatura,
-    sc.ds_situacao_candidatura
-FROM eleicao.situacao_candidatura sc;
-
--- =========================================
--- DIMENSÃO SITUAÇÃO TURNO
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_situacao_turno AS
-SELECT
-    st.cd_sit_tot_turno,
-    st.ds_sit_tot_turno
-FROM eleicao.situacao_turno st;
-
--- =========================================
--- DIMENSÃO REGIÃO
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_regiao AS
-SELECT
-    r.cd_regiao,
-    r.nm_regiao
-FROM eleicao.regiao r;
-
--- =========================================
--- DIMENSÃO UF
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_uf AS
+    EXTRACT(DAY FROM e.dt_eleicao) AS dia,
+    EXTRACT(QUARTER FROM e.dt_eleicao) AS trimestre
+FROM eleicao e;
+--
+CREATE OR REPLACE VIEW dim_uf AS
 SELECT
     u.sg_uf,
     u.nm_uf,
-    u.cd_regiao
-FROM eleicao.uf u;
-
--- =========================================
--- DIMENSÃO MUNICÍPIO
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_municipio AS
+    r.cd_regiao,
+    r.nm_regiao
+FROM uf u
+LEFT JOIN regiao r
+    ON r.cd_regiao = u.cd_regiao;
+--
+CREATE OR REPLACE VIEW dim_municipio AS
 SELECT
     m.cd_municipio_tse,
     m.nm_municipio,
-    m.sg_uf
-FROM eleicao.municipio m;
-
--- =========================================
--- DIMENSÃO FEDERAÇÃO
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_federacao AS
+    m.sg_uf,
+    u.nm_uf,
+    r.nm_regiao
+FROM municipio m
+LEFT JOIN uf u
+    ON u.sg_uf = m.sg_uf
+LEFT JOIN regiao r
+    ON r.cd_regiao = u.cd_regiao;
+--
+CREATE OR REPLACE VIEW dim_cargo AS
 SELECT
-    f.nr_federacao,
-    f.nm_federacao,
-    f.sg_federacao,
-    f.ds_composicao_federacao
-FROM eleicao.federacao f;
-
--- =========================================
--- DIMENSÃO COLIGAÇÃO
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_coligacao AS
+    cd_cargo,
+    ds_cargo
+FROM cargo;
+--
+CREATE OR REPLACE VIEW dim_partido AS
 SELECT
-    c.sq_coligacao,
-    c.nm_coligacao,
-    c.ds_composicao_coligacao
-FROM eleicao.coligacao c;
-
--- =========================================
--- DIMENSÃO TIPO BEM
--- =========================================
-
-CREATE OR REPLACE VIEW eleicao.dim_tipo_bem AS
+    nr_partido,
+    sg_partido,
+    nm_partido
+FROM partido;
+--
+CREATE OR REPLACE VIEW dim_federacao AS
 SELECT
-    tb.cd_tipo_bem,
-    tb.ds_tipo_bem
-FROM eleicao.tipo_bem tb;
+    nr_federacao,
+    sg_federacao,
+    nm_federacao,
+    ds_composicao_federacao
+FROM federacao;
+--
+CREATE OR REPLACE VIEW dim_tipo_bem AS
+SELECT
+    cd_tipo_bem,
+    ds_tipo_bem
+FROM tipo_bem;
+--
+CREATE OR REPLACE VIEW fato_eleicao AS
+SELECT
 
--- =========================================
--- DIMENSÃO CANDIDATO
--- =========================================
-CREATE OR REPLACE VIEW eleicao.dim_candidato AS 
-SELECT 
-	c.cd_eleicao,
-    c.sq_candidato, 
-    c.nr_candidato, 
-    c.nm_candidato, 
-    c.nm_urna, 
-    c.nm_social, 
-    c.sg_uf_nascimento,
-    EXTRACT(YEAR FROM AGE(e.dt_eleicao, c.dt_nascimento)) AS idade
-FROM eleicao.candidato c
-LEFT JOIN eleicao.eleicao e ON e.cd_eleicao = c.cd_eleicao;
+    c.id_candidatura,
 
--- =========================================
--- FATO PRESTACAO CONTAS
--- =========================================
---REFRESH MATERIALIZED VIEW eleicao.fato_prestacao_contas;
---DROP MATERIALIZED VIEW IF EXISTS eleicao.fato_prestacao_contas;
---CREATE MATERIALIZED VIEW eleicao.fato_prestacao_contas AS
+    -- eleição
+    e.cd_eleicao,
+    e.ano_eleicao,
+    e.dt_eleicao,
 
-CREATE OR REPLACE VIEW eleicao.fato_prestacao_contas AS 
-SELECT 
-    b.id_bem,
-    b.cd_eleicao,
-    b.sq_candidato,
-    b.cd_tipo_bem, 
+    -- localização
+    c.sg_uf,
     c.cd_municipio_tse,
+
+    -- cargo
+    c.cd_cargo,
+    cg.ds_cargo,
+
+    -- partido
+    c.nr_partido,
+    p.sg_partido,
+
+    -- federação
+    c.nr_federacao,
+    f.sg_federacao,
+
+    -- candidato
+    cand.cd_genero,
+    g.ds_genero,
+
+    cand.cd_grau_instrucao,
+    gi.ds_grau_instrucao,
+
+    cand.cd_cor_raca,
+    cr.ds_cor_raca,
+
+    cand.cd_estado_civil,
+    ec.ds_estado_civil,
+
+    cand.cd_ocupacao,
+    oc.ds_ocupacao,
+
+    EXTRACT(
+        YEAR FROM AGE(
+            e.dt_eleicao,
+            cand.dt_nascimento
+        )
+    )::INT AS idade,
+
+    -- situação
+    c.cd_sit_tot_turno,
+    st.ds_sit_tot_turno,
+
+    c.cd_situacao_candidatura,
+    sc.ds_situacao_candidatura,
+
+    -- métricas
+    1 AS qt_candidatos,
+
+    CASE
+        WHEN UPPER(st.ds_sit_tot_turno)
+             LIKE '%ELEITO%'
+        THEN 1
+        ELSE 0
+    END AS qt_eleitos
+
+FROM candidatura c
+
+INNER JOIN eleicao e
+    ON e.cd_eleicao = c.cd_eleicao
+
+INNER JOIN candidato cand
+    ON cand.sq_candidato = c.sq_candidato
+
+LEFT JOIN cargo cg
+    ON cg.cd_cargo = c.cd_cargo
+
+LEFT JOIN partido p
+    ON p.nr_partido = c.nr_partido
+
+LEFT JOIN federacao f
+    ON f.nr_federacao = c.nr_federacao
+
+LEFT JOIN genero g
+    ON g.cd_genero = cand.cd_genero
+
+LEFT JOIN grau_instrucao gi
+    ON gi.cd_grau_instrucao = cand.cd_grau_instrucao
+
+LEFT JOIN cor_raca cr
+    ON cr.cd_cor_raca = cand.cd_cor_raca
+
+LEFT JOIN estado_civil ec
+    ON ec.cd_estado_civil = cand.cd_estado_civil
+
+LEFT JOIN ocupacao oc
+    ON oc.cd_ocupacao = cand.cd_ocupacao
+
+LEFT JOIN situacao_turno st
+    ON st.cd_sit_tot_turno = c.cd_sit_tot_turno
+
+LEFT JOIN situacao_candidatura sc
+    ON sc.cd_situacao_candidatura = c.cd_situacao_candidatura;
+--
+CREATE OR REPLACE VIEW fato_bens AS
+SELECT
+
+    b.id_bem,
+
+    b.id_candidatura,
+
+    e.cd_eleicao,
+    e.ano_eleicao,
+
+    c.sg_uf,
+    c.cd_municipio_tse,
+
+    c.cd_cargo,
+    cg.ds_cargo,
+
+    c.nr_partido,
+    p.sg_partido,
+
+    c.nr_federacao,
+    f.sg_federacao,
+
+    cand.cd_genero,
+    g.ds_genero,
+
+    cand.cd_grau_instrucao,
+    gi.ds_grau_instrucao,
+
+    cand.cd_cor_raca,
+    cr.ds_cor_raca,
+
+    b.cd_tipo_bem,
+    tb.ds_tipo_bem,
+
+    b.nr_ordem_bem,
+
     b.vr_bem,
-    1 AS qt_bens,
-    CASE WHEN b.vr_bem > 1000000 THEN 1 ELSE 0 END AS qt_bens_milionarios
-FROM eleicao.bem_candidato b
-LEFT JOIN eleicao.candidato c ON  b.sq_candidato = c.sq_candidato 
-    AND b.cd_eleicao = c.cd_eleicao; 
+
+    1 AS qt_bens
+
+FROM bem_candidato b
+
+INNER JOIN candidatura c
+    ON c.id_candidatura = b.id_candidatura
+
+INNER JOIN eleicao e
+    ON e.cd_eleicao = c.cd_eleicao
+
+INNER JOIN candidato cand
+    ON cand.sq_candidato = c.sq_candidato
+
+LEFT JOIN cargo cg
+    ON cg.cd_cargo = c.cd_cargo
+
+LEFT JOIN partido p
+    ON p.nr_partido = c.nr_partido
+
+LEFT JOIN federacao f
+    ON f.nr_federacao = c.nr_federacao
+
+LEFT JOIN genero g
+    ON g.cd_genero = cand.cd_genero
+
+LEFT JOIN grau_instrucao gi
+    ON gi.cd_grau_instrucao = cand.cd_grau_instrucao
+
+LEFT JOIN cor_raca cr
+    ON cr.cd_cor_raca = cand.cd_cor_raca
+
+LEFT JOIN tipo_bem tb
+    ON tb.cd_tipo_bem = b.cd_tipo_bem;
+--
+--
+--1. Taxa de Sucesso
+CREATE OR REPLACE VIEW kpi_taxa_sucesso AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+    SUM(qt_eleitos) AS eleitos,
+    SUM(qt_candidatos) AS candidatos,
+    ROUND(
+        100.0 * SUM(qt_eleitos)
+        / NULLIF(SUM(qt_candidatos),0)
+    ,2) AS taxa_sucesso
+FROM fato_eleicao
+GROUP BY
+    ano_eleicao,
+    sg_uf;
+--
+--2. Percentual Feminino
+CREATE OR REPLACE VIEW kpi_perc_feminino AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+
+    ROUND(
+        100.0 *
+        SUM(
+            CASE
+                WHEN ds_genero = 'FEMININO'
+                THEN 1
+                ELSE 0
+            END
+        )
+        / COUNT(*)
+    ,2) AS perc_feminino
+
+FROM fato_eleicao
+
+GROUP BY
+    ano_eleicao,
+    sg_uf;
+--
+--3. Percentual Masculino
+CREATE OR REPLACE VIEW kpi_perc_masculino AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+
+    ROUND(
+        100.0 *
+        SUM(
+            CASE
+                WHEN ds_genero = 'MASCULINO'
+                THEN 1
+                ELSE 0
+            END
+        )
+        / COUNT(*)
+    ,2) AS perc_masculino
+
+FROM fato_eleicao
+
+GROUP BY
+    ano_eleicao,
+    sg_uf;
+--
+--4. Sucesso Feminino
+CREATE OR REPLACE VIEW kpi_sucesso_feminino AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+
+    COUNT(*) AS total_mulheres,
+
+    SUM(qt_eleitos) AS mulheres_eleitas,
+
+    ROUND(
+        100.0 * SUM(qt_eleitos)
+        / COUNT(*)
+    ,2) AS taxa_sucesso_feminino
+
+FROM fato_eleicao
+
+WHERE ds_genero = 'FEMININO'
+
+GROUP BY
+    ano_eleicao,
+    sg_uf;
+--
+--5. Sucesso Masculino
+CREATE OR REPLACE VIEW kpi_sucesso_masculino AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+
+    COUNT(*) AS total_homens,
+
+    SUM(qt_eleitos) AS homens_eleitos,
+
+    ROUND(
+        100.0 * SUM(qt_eleitos)
+        / COUNT(*)
+    ,2) AS taxa_sucesso_masculino
+
+FROM fato_eleicao
+
+WHERE ds_genero = 'MASCULINO'
+
+GROUP BY
+    ano_eleicao,
+    sg_uf;
+--
+--6. Eficiência por Partido
+CREATE OR REPLACE VIEW kpi_eficiencia_partido AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+    sg_partido,
+
+    COUNT(*) AS candidatos,
+
+    SUM(qt_eleitos) AS eleitos,
+
+    ROUND(
+        100.0 * SUM(qt_eleitos)
+        / COUNT(*)
+    ,2) AS eficiencia
+
+FROM fato_eleicao
+
+GROUP BY
+    ano_eleicao,
+    sg_uf,
+    sg_partido;
+--
+--7. Partido com Mais Candidatos
+CREATE OR REPLACE VIEW kpi_top_partido_candidatos AS
+SELECT *
+FROM (
+
+    SELECT
+        ano_eleicao,
+        sg_uf,
+        sg_partido,
+
+        COUNT(*) AS total_candidatos,
+
+        ROW_NUMBER() OVER(
+            PARTITION BY
+                ano_eleicao,
+                sg_uf
+            ORDER BY
+                COUNT(*) DESC
+        ) AS posicao
+
+    FROM fato_eleicao
+
+    GROUP BY
+        ano_eleicao,
+        sg_uf,
+        sg_partido
+
+) x
+
+WHERE posicao = 1;
+--
+--8. Percentual Ensino Superior
+
+CREATE OR REPLACE VIEW kpi_perc_superior AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+
+    ROUND(
+        100.0 *
+        SUM(
+            CASE
+                WHEN ds_grau_instrucao ILIKE '%SUPERIOR%'
+                THEN 1
+                ELSE 0
+            END
+        )
+        / COUNT(*)
+    ,2) AS perc_superior
+
+FROM fato_eleicao
+
+GROUP BY
+    ano_eleicao,
+    sg_uf;
+--
+--9. Sucesso por Escolaridade
+CREATE OR REPLACE VIEW kpi_sucesso_escolaridade AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+    ds_grau_instrucao,
+
+    COUNT(*) AS candidatos,
+
+    SUM(qt_eleitos) AS eleitos,
+
+    ROUND(
+        100.0 * SUM(qt_eleitos)
+        / COUNT(*)
+    ,2) AS taxa_sucesso
+
+FROM fato_eleicao
+
+GROUP BY
+    ano_eleicao,
+    sg_uf,
+    ds_grau_instrucao;
+--
+--10. Percentual por Raça
+--
+CREATE OR REPLACE VIEW kpi_perc_raca AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+    ds_cor_raca,
+
+    COUNT(*) AS candidatos,
+
+    ROUND(
+        100.0 * COUNT(*)
+        /
+        SUM(COUNT(*)) OVER(
+            PARTITION BY
+                ano_eleicao,
+                sg_uf
+        )
+    ,2) AS percentual
+
+FROM fato_eleicao
+
+GROUP BY
+    ano_eleicao,
+    sg_uf,
+    ds_cor_raca;
+--
+--11. Sucesso por Raça
+CREATE OR REPLACE VIEW kpi_sucesso_raca AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+    ds_cor_raca,
+
+    COUNT(*) AS candidatos,
+
+    SUM(qt_eleitos) AS eleitos,
+
+    ROUND(
+        100.0 * SUM(qt_eleitos)
+        / COUNT(*)
+    ,2) AS taxa_sucesso
+
+FROM fato_eleicao
+
+GROUP BY
+    ano_eleicao,
+    sg_uf,
+    ds_cor_raca;
+--
+--12. Idade Média
+CREATE OR REPLACE VIEW kpi_idade_media AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+
+    ROUND(
+        AVG(idade)
+    ,2) AS idade_media
+
+FROM fato_eleicao
+
+GROUP BY
+    ano_eleicao,
+    sg_uf;
+--
+--13. Idade Média dos Eleitos
+CREATE OR REPLACE VIEW kpi_idade_media_eleitos AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+
+    ROUND(
+        AVG(idade)
+    ,2) AS idade_media_eleitos
+
+FROM fato_eleicao
+
+WHERE qt_eleitos = 1
+
+GROUP BY
+    ano_eleicao,
+    sg_uf;
+--
+--14. Candidatos por Cargo
+CREATE OR REPLACE VIEW kpi_candidatos_cargo AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+    ds_cargo,
+
+    COUNT(*) AS total_candidatos
+
+FROM fato_eleicao
+
+GROUP BY
+    ano_eleicao,
+    sg_uf,
+    ds_cargo;
+--
+--15. Taxa de Sucesso por Cargo
+CREATE OR REPLACE VIEW kpi_taxa_sucesso_cargo AS
+SELECT
+    ano_eleicao,
+    sg_uf,
+    ds_cargo,
+
+    COUNT(*) AS candidatos,
+
+    SUM(qt_eleitos) AS eleitos,
+
+    ROUND(
+        100.0 * SUM(qt_eleitos)
+        / COUNT(*)
+    ,2) AS taxa_sucesso
+
+FROM fato_eleicao
+
+GROUP BY
+    ano_eleicao,
+    sg_uf,
+    ds_cargo;
+
+
 
