@@ -1,591 +1,373 @@
 import pandas as pd
+import time
+from datetime import datetime
 import glob
 from pathlib import Path
+
 from sqlalchemy import create_engine, text
+from urllib.parse import quote_plus
 
-# =========================
-# CONEXÃO
-# =========================
+from sklearn.pipeline import Pipeline
 
-engine = create_engine(
-    "postgresql+psycopg2://2422120019_Ivan:2422120019_Ivan@dataiesb.iesbtech.com.br:5432/2422120019_Ivan",
-    connect_args={"options": "-csearch_path=eleicao"}
-)
+from config import LOG_FILE, RAW_DIR
+from data_transformers import HigienizadorTSE, ProcessadorTipos 
+from data_apoio import TabelasApoio
+from etl_tse_completo_des import inserir_dados
+from mapas import MAPAS, ORDEM_CARGA, TABELAS_UPSERT, ORDEM_CARGA, MAPAS_POR_TIPO
 
-# =========================
-# REGIÕES
-# =========================
+# =========================================
+# 1. configurações de conexão
+# =========================================
+# Configurações da conexão com o banco de dados
+'''
+db_config = {
+    "user": "2422120019_Ivan",
+    "pass": "2422120019_Ivan",
+    "host": "dataiesb.iesbtech.com.br",
+    "port": "5432",
+    "db": "2422120019_Ivan",
+    "schema": "eleicao_des"
+}
+'''
+db_config = {
+    "user": "postgres",
+    "pass": quote_plus("pstComunidade@9"),
+    "host": "localhost",
+    "port": "5432",
+    "db": "tse",
+    "schema": "eleicao"
+}
 
-regioes = pd.DataFrame([
-    {"nm_regiao": "Norte"},
-    {"nm_regiao": "Nordeste"},
-    {"nm_regiao": "Centro-Oeste"},
-    {"nm_regiao": "Sudeste"},
-    {"nm_regiao": "Sul"}
-])
+user = db_config['user']
+pwd = db_config['pass']
+host = db_config['host']
+port = db_config['port']
+db = db_config['db']
+schema = db_config['schema']
 
-# =========================
-# UFs
-# =========================
-
-ufs = pd.DataFrame([
-    {"sg_uf": "AC", "nm_uf": "Acre", "nm_regiao": "Norte"},
-    {"sg_uf": "AL", "nm_uf": "Alagoas", "nm_regiao": "Nordeste"},
-    {"sg_uf": "AP", "nm_uf": "Amapá", "nm_regiao": "Norte"},
-    {"sg_uf": "AM", "nm_uf": "Amazonas", "nm_regiao": "Norte"},
-    {"sg_uf": "BA", "nm_uf": "Bahia", "nm_regiao": "Nordeste"},
-    {"sg_uf": "CE", "nm_uf": "Ceará", "nm_regiao": "Nordeste"},
-    {"sg_uf": "DF", "nm_uf": "Distrito Federal", "nm_regiao": "Centro-Oeste"},
-    {"sg_uf": "ES", "nm_uf": "Espírito Santo", "nm_regiao": "Sudeste"},
-    {"sg_uf": "GO", "nm_uf": "Goiás", "nm_regiao": "Centro-Oeste"},
-    {"sg_uf": "MA", "nm_uf": "Maranhão", "nm_regiao": "Nordeste"},
-    {"sg_uf": "MT", "nm_uf": "Mato Grosso", "nm_regiao": "Centro-Oeste"},
-    {"sg_uf": "MS", "nm_uf": "Mato Grosso do Sul", "nm_regiao": "Centro-Oeste"},
-    {"sg_uf": "MG", "nm_uf": "Minas Gerais", "nm_regiao": "Sudeste"},
-    {"sg_uf": "PA", "nm_uf": "Pará", "nm_regiao": "Norte"},
-    {"sg_uf": "PB", "nm_uf": "Paraíba", "nm_regiao": "Nordeste"},
-    {"sg_uf": "PR", "nm_uf": "Paraná", "nm_regiao": "Sul"},
-    {"sg_uf": "PE", "nm_uf": "Pernambuco", "nm_regiao": "Nordeste"},
-    {"sg_uf": "PI", "nm_uf": "Piauí", "nm_regiao": "Nordeste"},
-    {"sg_uf": "RJ", "nm_uf": "Rio de Janeiro", "nm_regiao": "Sudeste"},
-    {"sg_uf": "RN", "nm_uf": "Rio Grande do Norte", "nm_regiao": "Nordeste"},
-    {"sg_uf": "RS", "nm_uf": "Rio Grande do Sul", "nm_regiao": "Sul"},
-    {"sg_uf": "RO", "nm_uf": "Rondônia", "nm_regiao": "Norte"},
-    {"sg_uf": "RR", "nm_uf": "Roraima", "nm_regiao": "Norte"},
-    {"sg_uf": "SC", "nm_uf": "Santa Catarina", "nm_regiao": "Sul"},
-    {"sg_uf": "SP", "nm_uf": "São Paulo", "nm_regiao": "Sudeste"},
-    {"sg_uf": "SE", "nm_uf": "Sergipe", "nm_regiao": "Nordeste"},
-    {"sg_uf": "TO", "nm_uf": "Tocantins", "nm_regiao": "Norte"},
-])
-
-# =========================
-# LER TODOS OS CSVs
-# =========================
-
-base_dir = Path(__file__).resolve().parent
-caminho = base_dir / ".." / "data" / "raw" / "consulta_cand_2024" / "*.csv"
-
-arquivos = glob.glob(str(caminho))
-
-if not arquivos:
-    raise FileNotFoundError(f"Nenhum CSV encontrado em: {caminho}")
-
-lista_df = []
-
-for arq in arquivos:
-    print(f"Lendo: {arq}")
-    
-    df_temp = pd.read_csv(
-        arq,
-        sep=";",
-        encoding="latin1",
-        low_memory=False
+# 
+#url = f"postgresql+psycopg2://{db_config['user']}:{db_config['pass']}@{db_config['host']}:{db_config['port']}/{db_config['db']}"
+url = f"postgresql+psycopg2://{user}:{pwd}@{host}:{port}/{db}"
+try:
+    engine = create_engine(
+        url,
+        connect_args={"options": f"-csearch_path={schema}"}
     )
+except Exception as e:
+    #print(f"Erro conectando ao banco de dados: {str(e)}")
+    with open(LOG_FILE, "a") as f: f.write(f"[{datetime.now()}] Erro conectando ao BD: {str(e)}\n")  
 
-    lista_df.append(df_temp)
 
-df = pd.concat(lista_df, ignore_index=True)
+# =========================================
+# 3. processamento dos arquivos
+# =========================================
+def tratar_ue(df):
+    #print("passei no tratar_ue dentro de etl....")
 
-print(f"Total de registros: {len(df)}")
+    # caso exista SG_UE
+    if "SG_UE" in df.columns:
 
-# =========================
-# PADRONIZA COLUNAS
-# =========================
+        sg_ue = df["SG_UE"].astype(str)
 
-df.columns = [col.lower() for col in df.columns]
+        mask_numero = sg_ue.str.isdigit()
 
-# =========================
-# DATAS
-# =========================
+        # municípios
+        df.loc[mask_numero, "cd_municipio_tse"] = sg_ue[mask_numero]
 
-df["dt_nascimento"] = pd.to_datetime(
-    df["dt_nascimento"],
-    format="%d/%m/%Y",
-    errors="coerce"
-)
+        # UFs antigas
+        df.loc[~mask_numero, "sg_uf"] = sg_ue[~mask_numero]
 
-df["dt_eleicao"] = pd.to_datetime(
-    df["dt_eleicao"],
-    format="%d/%m/%Y",
-    errors="coerce"
-)
+    # arquivos sem SG_UE
+    elif "SG_UF" in df.columns:
 
-# =========================
-# UFs
-# =========================
+        df["sg_uf"] = df["SG_UF"]
 
-df["sg_uf"] = (
-    df["sg_uf"]
-    .fillna("")
-    .astype(str)
-    .str.strip()
-    .str[:2]
-)
+    return df
 
-df["sg_uf_nascimento"] = (
-    df["sg_uf_nascimento"]
-    .fillna("")
-    .astype(str)
-    .str.strip()
-    .str[:2]
-)
 
-# =========================
-# COLIGAÇÃO
-# =========================
+'''
+def tratar_ue(df):
 
-df["sq_coligacao"] = pd.to_numeric(
-    df["sq_coligacao"],
-    errors="coerce"
-)
+    # garante string
+    sg_ue = df["SG_UE"].astype(str)
 
-df = df.dropna(subset=["sq_coligacao"])
+    # identifica números
+    mask_numero = sg_ue.str.isdigit()
 
-df["sq_coligacao"] = df["sq_coligacao"].astype("int64")
+    # município quando for número
+    df.loc[mask_numero, "cd_municipio_tse"] = sg_ue[mask_numero]
 
-# =========================
-# CAMPOS NUMÉRICOS
-# =========================
+    # uf quando NÃO for número
+    df.loc[~mask_numero, "sg_uf"] = sg_ue[~mask_numero]
 
-campos_numericos = [
-    "cd_eleicao",
-    "nr_partido",
-    "nr_federacao",
-    "cd_cargo",
-    "cd_genero",
-    "cd_grau_instrucao",
-    "cd_estado_civil",
-    "cd_cor_raca",
-    "cd_ocupacao",
-    "cd_situacao_candidatura",
-    "cd_sit_tot_turno"
-]
+    return df
+'''
+def adicionar_id_candidatura(df_bens, engine):
+    sql = """
+            SELECT
+                id_candidatura AS ID_CANDIDATURA,
+                sq_candidato AS SQ_CANDIDATO,
+                cd_eleicao AS CD_ELEICAO
+            FROM candidatura
+        """
+    df_candidatura = pd.read_sql(sql, engine)
+    #print(df_candidatura.to_string(index=False))
+    #print(f"df_candidatura colunas: {df_candidatura.columns.str.upper().tolist()}")
 
-for campo in campos_numericos:
-    df[campo] = pd.to_numeric(df[campo], errors="coerce")
+    #exit()
+    #df_candidatura.columns = df_candidatura.columns.str.upper()
 
-# =========================
-# UPSERT EM LOTES
-# =========================
+    #print(f"Adicionando ID_CANDIDATURA: {df_bens} registros de bens x {df_candidatura} registros de candidatura")
+    #print("antes do merge:")
+    #print(df_bens.columns.tolist())
+    #print(df_candidatura.columns.tolist())
 
-def insert_ignore_batch(df, tabela, pk_cols, batch_size=50000):
+    df_bens = df_bens.merge(
+            df_candidatura[["sq_candidato", "id_candidatura", "cd_eleicao"]],
+            on=["sq_candidato", "cd_eleicao"],
+            how="left"
+    )
+    
+    #("depois do merge:")
+    #print(df_bens.columns.tolist())
+    #print(df_candidatura.columns.tolist())
 
+    return df_bens    
+
+
+def inserir_dados(df, tabela, engine, nome_arquivo, pk=None, upsert=False):
     if df.empty:
         return
+    try:
 
-    schema = "eleicao"
+        df = df.astype(object)
 
-    for i in range(0, len(df), batch_size):
-
-        chunk = df.iloc[i:i+batch_size]
-
-        temp_table = f"tmp_{tabela}"
-
-        chunk.to_sql(
-            temp_table,
-            engine,
-            if_exists='replace',
-            index=False,
-            schema=schema
+        df = df.where(
+            pd.notnull(df),
+            None
         )
 
-        cols = list(chunk.columns)
+        registros = df.to_dict(orient="records")
 
-        colunas = ", ".join(cols)
+        colunas = list(df.columns)
+        colunas_sql = ", ".join(colunas)
+        placeholders = ", ".join([f":{c}" for c in colunas])
 
-        conflito = ", ".join(pk_cols)
+        # ==================================================
+        # UPSERT
+        # ==================================================
 
-        sql = f"""
-            INSERT INTO {tabela} ({colunas})
-            SELECT {colunas}
-            FROM {temp_table}
-            ON CONFLICT ({conflito}) DO NOTHING;
+        if upsert and pk:
+            #print(f"Preparando UPSERT para {tabela} com PK {pk}")
 
-            DROP TABLE {temp_table};
-        """
+
+            colunas_update = [
+                c for c in colunas
+                if c not in pk
+            ]
+            
+            #print(colunas_update)
+
+            update_sql = ", ".join([
+                f"{c} = EXCLUDED.{c}"
+                for c in colunas_update
+            ])
+            #print(update_sql)
+
+            pk_sql = ", ".join(pk)
+            sql = f"""
+                INSERT INTO eleicao.{tabela}
+                ({colunas_sql})
+                VALUES ({placeholders})
+                ON CONFLICT ({pk_sql})
+                DO UPDATE SET
+                {update_sql}
+
+            """
+
+        # ==================================================
+        # INSERT IGNORE
+        # ==================================================
+
+        else:
+            #print(colunas_sql)
+            #print(placeholders)
+            pk_sql = ", ".join(pk)
+            sql = f"""
+                INSERT INTO eleicao.{tabela}
+                ({colunas_sql})
+                VALUES ({placeholders})
+                ON CONFLICT ({pk_sql})
+                DO NOTHING
+            """
+
+        # ==================================================
+        # EXECUTA
+        # ==================================================
 
         with engine.begin() as conn:
-            conn.execute(text(sql))
 
-        print(f"Lote {i} até {i+batch_size} inserido em {tabela}")
+            conn.execute(
+                text(sql),
+                registros
+            )
 
-# =========================
-# UPSERT
-# =========================
+        print(
+            f"[OK - inserido] {tabela}: "
+            f"{len(df)} registros"
+        )
 
-def insert_ignore(df, tabela, pk_cols):
+    except Exception as e:
 
-    if df.empty:
+        erro = (
+            f"[{datetime.now()}] "
+            f"Erro na tabela {tabela} "
+            f"arquivo {nome_arquivo}: "
+            f"{str(e)}"
+        )
+
+        #print(erro)
+
+        with open(LOG_FILE, "a") as f: f.write(erro + "\n")
+
+def processar_arquivo(caminho_csv, tipo="candidato"):
+
+    PIPELINES = {
+        "candidato": Pipeline([
+            ('higieniza', HigienizadorTSE()),
+            ('tipos', ProcessadorTipos())
+        ]),
+        "bens": Pipeline([
+            ('higieniza', HigienizadorTSE()),
+            ('tipos', ProcessadorTipos())
+        ])
+    }
+
+    inicio_arquivo = time.time()
+    print(f"\nIniciando: {caminho_csv.name} às {datetime.now().strftime('%H:%M:%S')}")
+
+    # 1. leitura
+    df_bruto = pd.read_csv(caminho_csv, sep=';', encoding='latin1')
+
+    if df_bruto.empty:
         return
 
-    schema = "eleicao"
+    # 2. pipeline por tipo
+    pipe = PIPELINES[tipo]
+    df_final = pipe.fit_transform(df_bruto)
 
-    temp_table = f"tmp_{tabela}"
+    # 3. filtra mapas válidos do tipo
+    mapas_validos = [
+        nome for nome in ORDEM_CARGA
+        if nome in MAPAS_POR_TIPO[tipo]
+    ]
 
-    df.to_sql(
-        temp_table,
-        engine,
-        if_exists='replace',
-        index=False,
-        schema=schema
+    dfs_processados = {}
+    #print(f"Mapas a processar: {mapas_validos}")
+    #print(df_final.columns)
+
+    # 4. ETAPA ÚNICA: transformação + preparação
+
+    for nome_mapa in mapas_validos:
+
+        mapa_obj = MAPAS[nome_mapa]
+  
+        try:
+            #if nome_mapa == "municipio":
+            #   print(f"Mapa a processar: {mapas_validos}")
+            #    print(df_final.columns)
+            #    print(df_tabela.columns)
+            #    exit()
+
+            df_tabela = mapa_obj.preparar_dataframe(df_final)
+
+
+            if df_tabela is None or df_tabela.empty:
+                continue
+
+            df_tabela = df_tabela.drop_duplicates()
+   
+            # regra especial bens (se existir nesse tipo)
+
+            if nome_mapa == "bem_candidato":
+                df_tabela = adicionar_id_candidatura(df_tabela, engine)
+
+            dfs_processados[nome_mapa] = df_tabela
+
+            print(f"[OK - processado] {nome_mapa}: {len(df_tabela)} registros")
+
+        except Exception as e:
+            print(f"[ERRO] {nome_mapa}: {e}")
+
+    # 5. ETAPA ÚNICA: persistência (SEM RECALCULAR NADA)
+    for nome_mapa in mapas_validos:
+
+        if nome_mapa not in dfs_processados:
+            continue
+
+        df_tabela = dfs_processados[nome_mapa]
+        mapa_obj = MAPAS[nome_mapa]
+        #print(f"vou chamar inserir_dados:{df_tabela}")
+        #print(f"vou chamar inserir_dados:{mapa_obj.tabela}")
+
+        if nome_mapa == "candidato" or nome_mapa == "candidatura" or nome_mapa == "municipio":
+            #print(df_tabela.columns)
+            df_tabela = tratar_ue(df_tabela)
+        
+
+        inserir_dados(
+            df=df_tabela,
+            tabela=mapa_obj.tabela,
+            engine=engine,
+            nome_arquivo=caminho_csv.name,
+            pk=mapa_obj.pk,
+            upsert=(nome_mapa in TABELAS_UPSERT)
+        )
+
+    print(f"Finalizado: {caminho_csv.name}")
+
+    duracao = time.time() - inicio_arquivo
+    print(
+        f"Duração: "
+        f"{int(duracao//3600):02d}:"
+        f"{int((duracao%3600)//60):02d}:"
+        f"{duracao%60:05.2f}"
     )
 
-    cols = list(df.columns)
+    #print(f"Duração: {int((time.time()-inicio_arquivo)//3600):02d}:{int(((time.time()-inicio_arquivo)%3600)//60):02d}:{(time.time()-inicio_arquivo)%60:05.2f}")
 
-    colunas = ", ".join(cols)
+# =========================================
+# 4. executar o processo ETL
+# =========================================
 
-    conflito = ", ".join(pk_cols)
+def executar_etl():
+    inicio_total = time.time()
+    print(f"INÍCIO DO PROCESSO ETL: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 
-    sql = f"""
-        INSERT INTO {tabela} ({colunas})
-        SELECT {colunas}
-        FROM {temp_table}
-        ON CONFLICT ({conflito}) DO NOTHING;
+    # CARGA ESTÁTICA AQUI 
+    print(f"Carregando dados estáticos: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+    TabelasApoio.carregar_dados_estaticos(engine)
+    print(f"Fim do carregamento dos dados estáticos: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 
-        DROP TABLE {temp_table};
-    """
+    # Localização de pastas conforme chat
+    pastas_cand = [p for p in RAW_DIR.iterdir() if p.is_dir() and p.name.startswith("consulta_cand_")]
+    pastas_bens = [p for p in RAW_DIR.iterdir() if p.is_dir() and p.name.startswith("bem_candidato_")]
 
-    with engine.begin() as conn:
-        conn.execute(text(sql))
+    for p in pastas_cand:
+        # Ordena: False (0) vem antes de True (1). Logo, 'BRASIL' fica por último.
+        arquivos = sorted(p.glob("*.csv"), key=lambda x: "BRASIL" in x.name.upper())
+        for f in arquivos: 
+            processar_arquivo(f, "candidato")
 
-    print(f"Inserido: {tabela}")
+    for p in pastas_bens:
+        arquivos = sorted(p.glob("*.csv"), key=lambda x: "BRASIL" in x.name.upper())
+        for f in arquivos: 
+              processar_arquivo(f, "bens")
 
-# =========================
-# REGIÕES
-# =========================
+       
+    print(f"\n🏆 ETL CONCLUÍDO! Tempo Total: {(time.time() - inicio_total)/60:.2f} minutos")
 
-insert_ignore(
-    regioes,
-    "regiao",
-    ["nm_regiao"]
-)
 
-# =========================
-# IDS REGIÕES
-# =========================
-
-query_regioes = """
-SELECT
-    cd_regiao,
-    nm_regiao
-FROM regiao
-"""
-
-df_regioes = pd.read_sql(query_regioes, engine)
-
-ufs = ufs.merge(
-    df_regioes,
-    on="nm_regiao",
-    how="left"
-)
-
-# =========================
-# UFs
-# =========================
-
-insert_ignore(
-    ufs[[
-        "sg_uf",
-        "nm_uf",
-        "cd_regiao"
-    ]],
-    "uf",
-    ["sg_uf"]
-)
-
-# =========================
-#  ELEIÇÃO
-# =========================
-
-insert_ignore(
-    df[[
-        "cd_eleicao",
-        "ano_eleicao",
-        "nm_tipo_eleicao",
-        "nr_turno",
-        "ds_eleicao",
-        "dt_eleicao",
-        "tp_abrangencia"
-    ]].drop_duplicates(),
-    "eleicao",
-    ["cd_eleicao"]
-)
-
-# =========================
-#  MUNICÍPIO
-# =========================
-
-municipios = df[[
-    "sg_uf",
-    "sg_ue",
-    "nm_ue"
-]].drop_duplicates()
-
-municipios.columns = [
-    "sg_uf",
-    "sg_ue",
-    "nm_municipio"
-]
-
-insert_ignore(
-    municipios,
-    "municipio",
-    ["sg_uf", "sg_ue"]
-)
-
-# =========================
-#  IDS MUNICÍPIOS
-# =========================
-
-query_municipios = """
-SELECT
-    cd_municipio,
-    sg_uf,
-    sg_ue
-FROM municipio
-"""
-
-df_municipios = pd.read_sql(
-    query_municipios,
-    engine
-)
-
-# =========================
-#  PADRONIZA TIPOS PARA MERGE
-# =========================
-
-df["sg_ue"] = (
-    df["sg_ue"]
-    .fillna("")
-    .astype(str)
-    .str.strip()
-)
-
-df_municipios["sg_ue"] = (
-    df_municipios["sg_ue"]
-    .fillna("")
-    .astype(str)
-    .str.strip()
-)
-# =========================
-#  MERGE
-# =========================
-
-df = df.merge(
-    df_municipios,
-    on=["sg_uf", "sg_ue"],
-    how="left"
-)
-
-# =========================
-#  CARGO
-# =========================
-
-insert_ignore(
-    df[[
-        "cd_cargo",
-        "ds_cargo"
-    ]].drop_duplicates(),
-    "cargo",
-    ["cd_cargo"]
-)
-
-# =========================
-#  PARTIDO
-# =========================
-
-insert_ignore(
-    df[[
-        "nr_partido",
-        "sg_partido",
-        "nm_partido"
-    ]].drop_duplicates(),
-    "partido",
-    ["nr_partido"]
-)
-
-# =========================
-#  FEDERAÇÃO
-# =========================
-
-insert_ignore(
-    df[[
-        "nr_federacao",
-        "nm_federacao",
-        "sg_federacao",
-        "ds_composicao_federacao"
-    ]].drop_duplicates(),
-    "federacao",
-    ["nr_federacao"]
-)
-
-# =========================
-#  COLIGAÇÃO
-# =========================
-
-insert_ignore(
-    df[[
-        "sq_coligacao",
-        "cd_eleicao",
-        "cd_municipio",
-        "nm_coligacao",
-        "ds_composicao_coligacao"
-    ]].drop_duplicates(),
-    "coligacao",
-    ["sq_coligacao", "cd_eleicao", "cd_municipio"]
-)
-
-# =========================
-#  GENERO
-# =========================
-
-insert_ignore(
-    df[[
-        "cd_genero",
-        "ds_genero"
-    ]].drop_duplicates(),
-    "genero",
-    ["cd_genero"]
-)
-
-# =========================
-#  GRAU INSTRUÇÃO
-# =========================
-
-insert_ignore(
-    df[[
-        "cd_grau_instrucao",
-        "ds_grau_instrucao"
-    ]].drop_duplicates(),
-    "grau_instrucao",
-    ["cd_grau_instrucao"]
-)
-
-# =========================
-#  ESTADO CIVIL
-# =========================
-
-insert_ignore(
-    df[[
-        "cd_estado_civil",
-        "ds_estado_civil"
-    ]].drop_duplicates(),
-    "estado_civil",
-    ["cd_estado_civil"]
-)
-
-# =========================
-#  COR RAÇA
-# =========================
-
-insert_ignore(
-    df[[
-        "cd_cor_raca",
-        "ds_cor_raca"
-    ]].drop_duplicates(),
-    "cor_raca",
-    ["cd_cor_raca"]
-)
-
-# =========================
-#  OCUPAÇÃO
-# =========================
-
-insert_ignore(
-    df[[
-        "cd_ocupacao",
-        "ds_ocupacao"
-    ]].drop_duplicates(),
-    "ocupacao",
-    ["cd_ocupacao"]
-)
-
-# =========================
-#  SITUAÇÃO CANDIDATURA
-# =========================
-
-insert_ignore(
-    df[[
-        "cd_situacao_candidatura",
-        "ds_situacao_candidatura"
-    ]].drop_duplicates(),
-    "situacao_candidatura",
-    ["cd_situacao_candidatura"]
-)
-
-# =========================
-#  SITUAÇÃO TURNO
-# =========================
-
-insert_ignore(
-    df[[
-        "cd_sit_tot_turno",
-        "ds_sit_tot_turno"
-    ]].drop_duplicates(),
-    "situacao_turno",
-    ["cd_sit_tot_turno"]
-)
-
-# =========================
-# CANDIDATO
-# =========================
-
-candidato = df[[
-    "sq_candidato",
-    "cd_eleicao",
-    "cd_municipio",
-    "cd_cargo",
-    "nr_partido",
-    "nr_federacao",
-    "sq_coligacao",
-    "nr_candidato",
-    "nm_candidato",
-    "nm_urna_candidato",
-    "nm_social_candidato",
-    "nr_cpf_candidato",
-    "ds_email",
-    "dt_nascimento",
-    "sg_uf_nascimento",
-    "nr_titulo_eleitoral_candidato",
-    "cd_genero",
-    "cd_grau_instrucao",
-    "cd_estado_civil",
-    "cd_cor_raca",
-    "cd_ocupacao",
-    "cd_situacao_candidatura",
-    "cd_sit_tot_turno"
-]].copy()
-
-candidato.columns = [
-    "sq_candidato",
-    "cd_eleicao",
-    "cd_municipio",
-    "cd_cargo",
-    "nr_partido",
-    "nr_federacao",
-    "sq_coligacao",
-    "nr_candidato",
-    "nm_candidato",
-    "nm_urna",
-    "nm_social",
-    "nr_cpf",
-    "ds_email",
-    "dt_nascimento",
-    "sg_uf_nascimento",
-    "nr_titulo_eleitoral",
-    "cd_genero",
-    "cd_grau_instrucao",
-    "cd_estado_civil",
-    "cd_cor_raca",
-    "cd_ocupacao",
-    "cd_situacao_candidatura",
-    "cd_sit_tot_turno"
-]
-
-insert_ignore_batch(
-    candidato,
-    "candidato",
-    ["sq_candidato"]
-)
-
-print("ETL FINALIZADO COM SUCESSO!")
+if __name__ == "__main__":
+    if LOG_FILE.exists(): LOG_FILE.unlink()
+    executar_etl()
