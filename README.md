@@ -1,6 +1,6 @@
 # Metodologia e Estrutura Tecnológica do Projeto
 
-Para a construção da aplicação e processamento dos dados abertos do Tribunal Superior Eleitoral (TSE) relativos a candidatos e patrimónios, foi desenvolvido um ecossistema tecnológico robusto focado em escalabilidade, integridade de dados e análise analítica. 
+Para a construção da aplicação e processamento dos dados abertos do Tribunal Superior Eleitoral (TSE) relativos a candidatos e patrimonios, foi desenvolvido um ecossistema tecnológico robusto focado em escalabilidade, integridade de dados e análise analítica. 
 
 O desenvolvimento foi estruturado em três pilares principais: desenvolvimento base, tratamento de dados (ETL) e visualização de indicadores.
 
