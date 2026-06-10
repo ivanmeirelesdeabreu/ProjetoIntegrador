@@ -1,3 +1,5 @@
+# Projeto Integrador Aplicado em Ciência de Dados e IA - I — Faculdade IESB
+
 # Metodologia e Estrutura Tecnológica do Projeto
 
 Para a construção da aplicação e processamento dos dados abertos do Tribunal Superior Eleitoral (TSE) relativos a candidatos e patrimonios, foi desenvolvido um ecossistema tecnológico robusto focado em escalabilidade, integridade de dados e análise analítica. 
@@ -21,3 +23,7 @@ Para garantir a reprodutibilidade, governança dos dados e a colaboração cont�
 * **`references`:** Contém os materiais de referência iniciais do projeto, incluindo os escopos, as diretrizes e a solicitação inicial que originou o desenvolvimento do trabalho, servindo como base de validação dos requisitos.
 * **`reports`:** Diretório focado nos relatórios gerados ao longo do projeto. Inclui os dicionários de dados e o dicionário de KPIs, essenciais para que os usuários finais e analistas entendam o significado e a regra de negócio por trás de cada campo e métrica calculada.
 * **`src`:** Pasta que concentra o código-fonte (*source code*) da aplicação em Python e Django. É neste diretório que residem a lógica do sistema, as rotas, a configuração do framework e as rotinas automatizadas do pipeline de ETL desenvolvidas com o Pandas.
+
+## Agradecimentos
+
+Expressamos nosso agradecimento ao **Professor Regiano Alves** pela orientação, suporte técnico e direcionamento estratégico ao longo do desenvolvimento deste projeto. Suas contribuições foram fundamentais para a definição das abordagens analíticas, estruturação e amadurecimento da arquitetura de dados aqui implementada.
